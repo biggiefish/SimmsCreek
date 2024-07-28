@@ -1,20 +1,28 @@
 ---
-title: "SimmsCCT"
+title: "SimmsFishFence"
 author: "Eric V"
 date: "`r Sys.Date()`"
-output: html_document
+theme: cerulean
+output: 
+  
+  html_document:
+    fig_caption: true
+    code_folding: "show"
+    toc: true
+    toc_float: true
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: scroll  
+runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
-
-# Active directory: C:\Users\evogt\R Analysis\EAV\GitHubMarkdown\R-Markdown-GitHub-Page\docs
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-## Simms Creek Coastal Cutthroat Trout
+Data presented here was collected by volunteers working with [Greenways Land Trust](https://www.greenwaystrust.ca/) to monitor the number of Coho Salmon and Coastal Cutthroat Trout emigrating from Simms Creek. Monitoring has occurred annually since 2008. No monitoring was completed in 2020 or 2021 due to the COVID pandemic, nor was monitoring completed in 2023 due to a DFO strike. 
 
-Data presented here was collected by volunteers working with [Greenways Land Trust](https://www.greenwaystrust.ca/)
-
+## Coastal Cutthroat Trout
 ```{r prep working environment, echo=FALSE, warning=FALSE, message = FALSE}
 ## Prepare Working Environment ----
 ## Clear workspace ##
@@ -70,6 +78,10 @@ list.of.packages <- c("tidyverse",
     library(xfun)
     library(kableExtra)
     library(shiny)
+    
+##  Set up captioner package calls. 
+  fig_nums   <- captioner(prefix = "Figure")  
+  table_nums <- captioner(prefix = "Table")
 
 ## Define Working Directory ---
    # setwd("C:/Users/evogt/R Analysis/EAV/GitHubMarkdown/Simms/docs")
@@ -108,6 +120,8 @@ list.of.packages <- c("tidyverse",
                                          DST       = "Downstream"))
 ```
 
+### Monitoring Effort and Catches
+
 ```{r, data summary, echo=FALSE, warning=FALSE, message = FALSE}
 # Summary table of bio data
 CCT_table <-  simms_bio %>% filter(Species == "CT") %>%
@@ -134,19 +148,19 @@ kable(CCT_table,
       booktabs = T,
       align = c("c"),
       col.names = c("Species", "Year", "Direction","Start", "End", "Duration","Total \nCatch", "Mean", "SD", "Min", "Max"),
-      caption = "**Table 1. Total annual captures of Coastal Cutthroat Trout during spring smolt trapping in Simms Creek.**",
+      caption = "**Table 1. Total annual captures of Coastal Cutthroat Trout during spring fish fence operation on Simms Creek.**",
       digits = 1) %>%
   #column_spec(c(1, 3,10,17), bold = TRUE) %>%
   kable_styling("striped", full_width =  FALSE,
                 position = "center", 
                 font_size = 12,
                 fixed_thead = TRUE) %>%
-  add_header_above(c(" " = 3, "Operation Period" = 3, "","Fork Length (mm)" = 4)) 
+  add_header_above(c(" " = 3, "Period" = 3, "","Fork Length (mm)" = 4)) 
 
 
 ```
 
-## Size Distribution of Simms Creek Coastal Cutthroat
+#### Size Distribution
 
 ```{r, length-frequency all years,echo=FALSE, warning=FALSE, message = FALSE}
 ## Length-Frequency Plot of all CCT captured to date.
@@ -172,6 +186,9 @@ kable(CCT_table,
 suppressWarnings(print(all_years.plot))
 ```
 
+**`r fig_nums("all_years.plot", "Length-frequency of all Coastal Cutthroat Trout captured since 2008.")`**
+
+
 ```{r, length-frequency by year,  echo=FALSE, warning=FALSE, message = FALSE}
 ## Length-Frequency Plot of CCT captured in each year
     ## Prepare Data
@@ -189,9 +206,11 @@ suppressWarnings(print(all_years.plot))
 suppressWarnings(print(annual.plot))
 ```
 
-## Capture Timing
+**`r fig_nums("annual.plot", "Length-frequency of Coastal Cutthroat Trout captured during annual monitoring.")`**
 
-```{r}
+### Capture Timing
+
+```{r,  echo=FALSE, warning=FALSE, message = FALSE}
 ## Prep Data
     ## Catch Data
     CCT_catch <- simms_bio %>% 
@@ -244,6 +263,6 @@ suppressWarnings(print(annual.plot))
 suppressWarnings(print(daily_catch))
 ```
 
+**`r fig_nums("daily_catch", "Proportion of total annual upstream and downstream catches.")`**
 
-
-
+## Coho Salmon
