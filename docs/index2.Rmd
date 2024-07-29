@@ -20,13 +20,14 @@ runtime: shiny
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-## Intro
-Simms Creek is a small, 3rd order stream that drains an area of ~1,800 ha into the Salish Sea, near Campbell River's Willow Point neighborhood. The lower reach of Simms Creek (~3 km of channel, east of Jubilee Road), is contained within a narrow urban green way that is bordered by residential properties. From Jubilee Road to the Inland Highway the stream is protected within [Beaver Lodge Lands](https://campbellriver.travel/news/forestry-guide-to-beaver-lodge-lands/), upstream of the Inland Highway, >1.5 km of tributary channel is located within private forest lands. 
 
-Historic fish observations indicate that Chum, Chinook, Pink and Coho Salmon have all been observed in the stream, as well as Coastal Cutthroat Trout, Rainbow Trout and Steelhead. Recent records, this dataset, suggest that Coho Salmon and Coastal Cutthroat Trout are the primary species within Simms Creek, both of which utilize the stream year round - though a small number of juvenile Chinook Salmon were identified in 2024. 
+Simms Creek is a small, 3rd order stream that flows into the Salish Sea near Campbell River's Willow Point neighborhood. The lower reach of Simms Creek (~3 km of channel, east of Jubilee Road), is contained within an urban green way that is bordered by residential properties. From Jubilee Road to the Inland Highway the stream is protected within [Beaver Lodge Lands](https://campbellriver.travel/news/forestry-guide-to-beaver-lodge-lands/), upstream of the Inland Highway, >1.5 km of tributary habitat is located within private forest lands. 
 
-[Greenways Land Trust](https://www.greenwaystrust.ca/) has supported Simms Creek Stewards for +20 years, including operation of a fish fence near the mouth of the stream since 2008. Juvenile and adult fish moving past the fence are tallied each spring and fall, respectively. The objective of this project is to explore the juvenile fence dataset. All work is being done strictly for fun and out of personal curiosity. Any feedback, input, or support is welcome. Also, I have a soft spot for Coastal Cutthroat Trout (CCT), so be warned that all analysis will be trout heavy. 
+Historic fish observations show that Chum, Chinook, Pink and Coho Salmon have all been observed in the stream, as well as Coastal Cutthroat Trout, Rainbow Trout and Steelhead. Recent records suggest that Coho Salmon and Coastal Cutthroat Trout are the primary species within Simms Creek, both of which utilize the stream year round. [Greenways Land Trust](https://www.greenwaystrust.ca/) has supported Simms Creek Stewards for +20 years, including operation of a fish fence near the mouth of the stream since 2008. 
 
+Each spring, all juvenile salmonids leaving Simms Creek are tallied. The objective of this project is to simply explore the juvenile dataset. All work is being done by myself, strictly for fun and out of curiosity. Any feedback, input, or support is welcome. Also, I have a soft spot for Coastal Cutthroat Trout, so this analysis will be trout heavy. 
+
+## Coastal Cutthroat Trout
 
 ```{r prep working environment, echo=FALSE, warning=FALSE, message = FALSE}
 ## Prepare Working Environment ----
@@ -89,7 +90,7 @@ list.of.packages <- c("tidyverse",
   table_nums <- captioner(prefix = "Table")
 
 ## Define Working Directory ---
-setwd("C:/Users/evogt/R Analysis/EAV/GitHubMarkdown/SimmsCreek/docs")
+#setwd("C:/Users/evogt/R Analysis/EAV/GitHubMarkdown/Simms/docs")
 
 ## Define Input Files
    #1 Load Simms Bio Data from all years
@@ -132,7 +133,7 @@ setwd("C:/Users/evogt/R Analysis/EAV/GitHubMarkdown/SimmsCreek/docs")
                                                 "CN " = "CN"))
 ```
 
-## Annual Fence Monitoring Effort and Catches
+### Monitoring Effort and Catches
 
 ```{r, Trap Summary, echo=FALSE, warning=FALSE, message = FALSE}
 # When trap was operated
@@ -243,13 +244,6 @@ as.Date('2008-06-15')-as.Date('2008-04-01')
 
 ```
 
-## Coastal Cutthroat Trout
-As previously mentioned, I like CCT, so let's start there. First a bit of background on them:
-
-  - g 
-  - g 
-
-Let's start things off by diving into the captures of Coastal Cutthroat 
 
 #### Size Distribution
 

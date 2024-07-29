@@ -20,18 +20,13 @@ runtime: shiny
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-## Intro
-Simms Creek is a small, 3rd order stream that drains an area of ~1,800 ha into the Salish Sea, near Campbell River's Willow Point neighborhood. The lower reach of Simms Creek (~3 km of channel, east of Jubilee Road), is contained within a narrow urban green way that is bordered by residential properties. From Jubilee Road to the Inland Highway the stream is protected within [Beaver Lodge Lands](https://campbellriver.travel/news/forestry-guide-to-beaver-lodge-lands/), upstream of the Inland Highway, >1.5 km of tributary channel is located within private forest lands. 
+Data presented here was collected by volunteers working with [Greenways Land Trust](https://www.greenwaystrust.ca/) to monitor the number of Coho Salmon and Coastal Cutthroat Trout emigrating from Simms Creek. Monitoring has occurred annually since 2008. No monitoring was completed in 2020 or 2021 due to the COVID pandemic, nor was monitoring completed in 2023 due to a DFO strike. 
 
-Historic fish observations indicate that Chum, Chinook, Pink and Coho Salmon have all been observed in the stream, as well as Coastal Cutthroat Trout, Rainbow Trout and Steelhead. Recent records, this dataset, suggest that Coho Salmon and Coastal Cutthroat Trout are the primary species within Simms Creek, both of which utilize the stream year round - though a small number of juvenile Chinook Salmon were identified in 2024. 
-
-[Greenways Land Trust](https://www.greenwaystrust.ca/) has supported Simms Creek Stewards for +20 years, including operation of a fish fence near the mouth of the stream since 2008. Juvenile and adult fish moving past the fence are tallied each spring and fall, respectively. The objective of this project is to explore the juvenile fence dataset. All work is being done strictly for fun and out of personal curiosity. Any feedback, input, or support is welcome. Also, I have a soft spot for Coastal Cutthroat Trout (CCT), so be warned that all analysis will be trout heavy. 
-
-
+## Coastal Cutthroat Trout
 ```{r prep working environment, echo=FALSE, warning=FALSE, message = FALSE}
 ## Prepare Working Environment ----
 ## Clear workspace ##
-rm(list = ls())  
+# rm(list = ls())  
 
 ## This code is to fix a bug in R 2023.06.0+421 <https://github.com/rstudio/rstudio/issues/13188>
     options(rstudio.help.showDataPreview = FALSE)
@@ -89,7 +84,7 @@ list.of.packages <- c("tidyverse",
   table_nums <- captioner(prefix = "Table")
 
 ## Define Working Directory ---
-setwd("C:/Users/evogt/R Analysis/EAV/GitHubMarkdown/SimmsCreek/docs")
+   # setwd("C:/Users/evogt/R Analysis/EAV/GitHubMarkdown/Simms/docs")
 
 ## Define Input Files
    #1 Load Simms Bio Data from all years
@@ -122,87 +117,18 @@ setwd("C:/Users/evogt/R Analysis/EAV/GitHubMarkdown/SimmsCreek/docs")
                                          UST       = "Upstream",
                                          DS        = "Downstream",
                                         'DS '      = "Downstream",
-                                         DST       = "Downstream"),
-                               Species = recode(as.factor(Species),
-                                                "CO"  = "CO",
-                                                "CO " = "CO",
-                                                "CT"  = "CT",
-                                                "CT " = "CT",
-                                                "CN"  = "CN",
-                                                "CN " = "CN"))
+                                         DST       = "Downstream"))
 ```
 
-## Annual Fence Monitoring Effort and Catches
+### Monitoring Effort and Catches
 
-```{r, Trap Summary, echo=FALSE, warning=FALSE, message = FALSE}
-# When trap was operated
-  ## Create Date Sequence - All dates when trap could be checked
-  date_seq <- data.frame(Date = seq(ymd('2008-04-15'), ymd('2024-06-15'), by = 'days')) %>%
-                  mutate(Month = strftime(Date, format = "%m"),
-                         Month = as.numeric(Month)) %>%
-                  filter(between(Month,4,6))
-
-  ## Which days trap was operated each year
-  trap <- simms_bio %>%
-            group_by(Date) %>%
-            summarize(n = 1) %>%
-            mutate(Year = strftime(Date, format = "%Y"))
-  
-  ## Proportion of survey period that was monitored.
-  trap_ops <- left_join(date_seq, trap, by = "Date") %>%
-              mutate(n = coalesce(n, 0)) %>%
-              group_by(Year) %>%
-              dplyr::summarize(Start = as.Date(min(Date)),
-                              End   = as.Date(max(Date)),
-                              SamplePeriod = as.numeric((End-Start)+1),
-                              DaysSampled = sum(n)) %>%
-              mutate(prop.sample.period =  percent(DaysSampled/SamplePeriod),
-                     prop.mig.period = percent(DaysSampled/75),
-                     Year  = as.numeric(Year),
-                     Start = format(Start, "%b-%d"),
-                     End   = format(End, "%b-%d"))
-  
-
-  
-
-    ## Number of Fish Tallied Annually
-  annual_tally <- simms_bio %>%
-                  ungroup %>%
-                  filter(Species == "CO" | Species == "CT") %>%
-                  group_by(Year, Species) %>%
-                  dplyr::summarise(n = n()) %>%
-                  pivot_wider(names_from = "Species", values_from = "n")
-
-## Summary Table
-summary_table <- left_join(trap_ops,annual_tally, by = "Year") %>%
-                     filter(!is.na(Year)) %>%
-                     select(1:3,5:9) %>%
-                     mutate(Total = CO + CT)
-
-## Prepare Kable Table
-kable(summary_table,
-      "html",
-      booktabs = T,
-      align = c("c"),
-      col.names = c("Year", "Start", "End", "# Days Sampled", "Sample Period", "Migration Period", "CO", "CCT", "Total"),
-      caption = "**Table 1. Annual trap operation period, proportion of operation period that was monitored, proportion of migration period that was monitored (Apr 1 to June 15), and number of Coho Salmon and Coastal Cutthroat Trout that were tallied.**",
-      digits = 1) %>%
-  #column_spec(c(1, 3,10,17), bold = TRUE) %>%
-  kable_styling("striped", full_width =  FALSE,
-                position = "center", 
-                font_size = 12,
-                fixed_thead = TRUE) %>%
-  add_header_above(c(" " = 1, "Sample Period" = 3, "Prop. Sampled (%)"= 2, "# Fish Tallied" =3)) 
-                
-```    
-
-```{original table, include = FALSE, echo=FALSE, warning=FALSE, message = FALSE }
-CCT_table <-  simms_bio %>% 
-                group_by(Year, Species) %>%
-                dplyr::summarize(
-                                 # Start_Date = as.Date(min(Date), "%b-%d"),
-                                 # End_Date   = as.Date(max(Date), "%b-%d"),
-                                 # Survey_Length = 1+(as.Date(End_Date) - as.Date(Start_Date)),
+```{r, data summary, echo=FALSE, warning=FALSE, message = FALSE}
+# Summary table of bio data
+CCT_table <-  simms_bio %>% filter(Species == "CT") %>%
+                group_by(Species, Year, Direction) %>%
+                dplyr::summarize(Start_Date = as.Date(min(Date), "%b-%d"),
+                                 End_Date   = as.Date(max(Date), "%b-%d"),
+                                 Survey_Length = 1+(as.Date(End_Date) - as.Date(Start_Date)),
                                  n          = n(),
                                  FL_mean = mean(Length, na.rm = TRUE),
                                  FL_SD   = sd(Length, na.rm = TRUE),
@@ -211,8 +137,8 @@ CCT_table <-  simms_bio %>%
                                  WT_mean = mean(Weight, na.rm = TRUE),
                                  WT_min  = min(Weight, na.rm = TRUE),
                                  WT_max  = max(Weight, na.rm = TRUE)) %>%
-                  # mutate(Start_Date = format(Start_Date, "%b-%d"),
-                  #        End_Date = format(End_Date, "%b-%d")) %>%
+                  mutate(Start_Date = format(Start_Date, "%b-%d"),
+                         End_Date = format(End_Date, "%b-%d")) %>%
                   #select("Year","Direction", "Start_Date","End_Date","Survey_Length","n","FL_mean","FL_SD","FL_min","FL_max")
                   select(1:11)
 
@@ -230,26 +156,9 @@ kable(CCT_table,
                 font_size = 12,
                 fixed_thead = TRUE) %>%
   add_header_above(c(" " = 3, "Period" = 3, "","Fork Length (mm)" = 4)) 
-```
 
-```{r annual trap operation, echo=FALSE, warning=FALSE, message = FALSE}
-
-
-
-
-as.Date('2008-06-15')-as.Date('2008-04-01')
-
-75
 
 ```
-
-## Coastal Cutthroat Trout
-As previously mentioned, I like CCT, so let's start there. First a bit of background on them:
-
-  - g 
-  - g 
-
-Let's start things off by diving into the captures of Coastal Cutthroat 
 
 #### Size Distribution
 
