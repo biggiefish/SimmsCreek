@@ -179,6 +179,15 @@ summary_table <- left_join(trap_ops,annual_tally, by = "Year") %>%
                      select(1:3,5:9) %>%
                      mutate(Total = CO + CT)
 
+```
+
+
+Fence monitoring starts in April and continues through late May to mid June. The first day of trap operation has ranged from `r format(min(as.Date(trap_ops$Start, "%b-%d")),"%b-%d")` to `r format(max(as.Date(trap_ops$Start, "%b-%d")), "%b-%d")` (mean = `r format(mean(as.Date(trap_ops$Start, "%b-%d")),"%b-%d")`). Once monitoring was initiated the traps were checked nearly continuously, with an average of `r round(mean(trap_ops$prop.sample.period),1)` of days being monitored. After a mean of `r round(mean(trap_ops$DaysSampled),0)` days the trap was dismantled and monitoring was ceased between `r format(min(as.Date(trap_ops$End, "%b-%d")),"%b-%d")`) and `r format(max(as.Date(trap_ops$End, "%b-%d")),"%b-%d")` (mean = `r format(mean(as.Date(trap_ops$End, "%b-%d")),"%b-%d")`).  
+
+Annual trap operation periods and total captures of Coastal Cutthroat Trout and Coho Salmon are presented below in Table 1. 
+
+
+```{r display.table, echo = FALSE, warning = FALSE, message = FALSE}
 ## Prepare Kable Table
 kable(summary_table,
       "html",
@@ -193,10 +202,10 @@ kable(summary_table,
                 font_size = 12,
                 fixed_thead = TRUE) %>%
   add_header_above(c(" " = 1, "Sample Period" = 3, "Prop. Sampled (%)"= 2, "# Fish Tallied" =3)) 
-                
-```    
+```
 
-```{original table, include = FALSE, echo=FALSE, warning=FALSE, message = FALSE }
+
+```{original table, echo=FALSE, warning=FALSE, message = FALSE }
 CCT_table <-  simms_bio %>% 
                 group_by(Year, Species) %>%
                 dplyr::summarize(
@@ -232,24 +241,10 @@ kable(CCT_table,
   add_header_above(c(" " = 3, "Period" = 3, "","Fork Length (mm)" = 4)) 
 ```
 
-```{r annual trap operation, echo=FALSE, warning=FALSE, message = FALSE}
-
-
-
-
-as.Date('2008-06-15')-as.Date('2008-04-01')
-
-75
-
-```
 
 ## Coastal Cutthroat Trout
-As previously mentioned, I like CCT, so let's start there. First a bit of background on them:
+As previously mentioned, I like CCT, so let's start there. We will look at the size of fish being captured, when the majority of the fish are migrating, and start to consider what may be driving some of the variability in migrants between years. 
 
-  - g 
-  - g 
-
-Let's start things off by diving into the captures of Coastal Cutthroat 
 
 #### Size Distribution
 
@@ -278,7 +273,6 @@ suppressWarnings(print(all_years.plot))
 ```
 
 **`r fig_nums("all_years.plot", "Length-frequency of all Coastal Cutthroat Trout captured since 2008.")`**
-
 
 ```{r, length-frequency by year,  echo=FALSE, warning=FALSE, message = FALSE}
 ## Length-Frequency Plot of CCT captured in each year
@@ -348,6 +342,7 @@ suppressWarnings(print(annual.plot))
                       facet_grid(Year~.) +
                       theme(legend.position = "bottom") +
                       theme_bw()
+
 ```
 
 ```{r, daily_catches, echo=FALSE, fig.width = 10, fig.height = 15}
@@ -355,5 +350,37 @@ suppressWarnings(print(daily_catch))
 ```
 
 **`r fig_nums("daily_catch", "Proportion of total annual upstream and downstream catches.")`**
+
+```{r}
+all_catches <- simms_bio %>% 
+               group_by(Species, Date, Direction) %>%
+               summarize(catch = n()) %>%
+               mutate(Year = strftime(Date, format = "%Y")) %>%
+               ungroup() %>%
+               group_by(Year) %>%
+               mutate(cum_catch   = cumsum(catch),
+                      total_catch = max(cum_catch),
+                      prop        = cum_catch/total_catch,
+                      date.std    = case_when(year(Date) >= 0 ~ 'year<-'(Date, 2024))) %>%
+               filter(!is.na(Direction))
+    
+daily_box <- ggplot(all_catches) + 
+                      geom_point(aes(x = date.std, y = catch, color = Species)) +
+                      labs(x = "", y = "Proportion of Total Annual Catch") +
+                      scale_x_date(date_minor_breaks = "1 day", 
+                           date_breaks = '1 week',
+                           date_labels = '%b-%d',
+                           limits = c(as.Date("2024-04-01"), as.Date("2024-06-15"))) +
+                      facet_grid(Year~Direction) +
+                      theme(legend.position = "bottom") +
+                      theme_bw() 
+```
+
+
+```{r, daily_box, echo=FALSE, fig.width = 10, fig.height = 15}
+suppressWarnings(print(daily_box))
+```
+
+**`r fig_nums("daily_box", "Boxplot showing range of captures of CCT and CO salmon.")`**
 
 ## Coho Salmon
