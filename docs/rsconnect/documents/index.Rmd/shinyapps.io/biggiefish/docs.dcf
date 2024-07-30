@@ -1,0 +1,12 @@
+name: docs
+title: docs
+username: biggiefish
+account: biggiefish
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 10588554
+bundleId: 8925281
+url: https://biggiefish.shinyapps.io/docs/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
