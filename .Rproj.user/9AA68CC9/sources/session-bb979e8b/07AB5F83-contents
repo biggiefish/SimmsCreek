@@ -183,7 +183,7 @@ summary_table <- left_join(trap_ops,annual_tally, by = "Year") %>%
 
 ```
 
-Fence monitoring starts in April and continues through late May to mid June. The first day of trap operation has ranged from `r format(min(as.Date(trap_ops$Start, "%b-%d")),"%b-%d")` to `r format(max(as.Date(trap_ops$Start, "%b-%d")), "%b-%d")` (mean = `r format(mean(as.Date(trap_ops$Start, "%b-%d")),"%b-%d")`). Once monitoring was initiated the traps were checked nearly continuously, with an average of `r round(mean(trap_ops$prop.sample.period),1)` of days being monitored. After a mean of `r round(mean(trap_ops$DaysSampled),0)` days the trap was dismantled and monitoring was ceased between `r format(min(as.Date(trap_ops$End, "%b-%d")),"%b-%d")`) and `r format(max(as.Date(trap_ops$End, "%b-%d")),"%b-%d")` (mean = `r format(mean(as.Date(trap_ops$End, "%b-%d")),"%b-%d")`).
+Fence monitoring starts in April and continues through late May to mid June. The first day of trap operation has ranged from `r format(min(as.Date(trap_ops$Start, "%b-%d")),"%b-%d")` to `r format(max(as.Date(trap_ops$Start, "%b-%d")), "%b-%d")` (mean = `r format(mean(as.Date(trap_ops$Start, "%b-%d")),"%b-%d")`). Once monitoring was initiated the traps were checked nearly continuously, with an average of `r round(mean(trap_ops$prop.sample.period),1)` of days being monitored. After a mean of `r round(mean(trap_ops$DaysSampled),0)` days the trap was dismantled and monitoring was ceased between `r format(min(as.Date(trap_ops$End, "%b-%d")),"%b-%d")` and `r format(max(as.Date(trap_ops$End, "%b-%d")),"%b-%d")` (mean = `r format(mean(as.Date(trap_ops$End, "%b-%d")),"%b-%d")`).
 
 Annual trap operation periods and total captures of Coastal Cutthroat Trout and Coho Salmon are presented below in Table 1.
 
@@ -363,7 +363,7 @@ all_catches <- simms_bio %>%
                filter(!is.na(Direction))
     
 daily_box <- ggplot(all_catches) + 
-                    geom_line(aes(x = date.std, y = prop, color = Species)) +
+                    geom_line(aes(x = date.std, y = catch, color = Species)) +
                     labs(x = "", y = "Proportion of Total Annual Catch") +
                     scale_x_date(date_minor_breaks = "1 day", 
                            date_breaks = '1 week',
