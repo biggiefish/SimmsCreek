@@ -1,0 +1,387 @@
+---
+title: "SimmsFishFence"
+author: "Eric V"
+date: "`r Sys.Date()`"
+output: bookdown::html_document2
+  
+#   html_notebook: 
+#     toc: yes
+#   flexdashboard::flex_dashboard:
+#     orientation: columns
+#     vertical_layout: scroll  
+#   html_document:
+#     fig_caption: true
+#     code_folding: "show"
+#     toc: true
+#     toc_float: true
+# editor_options: 
+#   chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+# Intro
+
+Simms Creek is a small, 3rd order stream that drains an area of \~1,800 ha into the Salish Sea, near Campbell River's Willow Point neighborhood. The lower reach of Simms Creek (\~3 km of channel, east of Jubilee Road), is contained within a narrow urban green way that is bordered by residential properties. From Jubilee Road to the Inland Highway the stream is protected within [Beaver Lodge Lands](https://campbellriver.travel/news/forestry-guide-to-beaver-lodge-lands/), upstream of the Inland Highway, \>1.5 km of tributary channel is located within private forest lands.
+
+Historic fish observations indicate that Chum, Chinook, Pink and Coho Salmon have all been observed in the stream, as well as Coastal Cutthroat Trout, Rainbow Trout and Steelhead. Recent records, this dataset, suggest that Coho Salmon and Coastal Cutthroat Trout are the primary species within Simms Creek, both of which utilize the stream year round - though a small number of juvenile Chinook Salmon were identified in 2024.
+
+[Greenways Land Trust](https://www.greenwaystrust.ca/) has supported Simms Creek Stewards for +20 years, including operation of a fish fence near the mouth of the stream since 2008. Juvenile and adult fish moving past the fence are tallied each spring and fall, respectively. The objective of this project is to explore the juvenile fence dataset. All work is being done strictly for fun and out of personal curiosity. Any feedback, input, or support is welcome. Also, I have a soft spot for Coastal Cutthroat Trout (CCT), so be warned that all analysis will be trout heavy.
+
+```{r prep working environment, echo=FALSE, warning=FALSE, message = FALSE}
+## Prepare Working Environment ----
+## Clear workspace ##
+rm(list = ls())  
+
+## This code is to fix a bug in R 2023.06.0+421 <https://github.com/rstudio/rstudio/issues/13188>
+    options(rstudio.help.showDataPreview = FALSE)
+    # getOption("rstudio.help.showDataPreview")
+
+## Load Packages and dependencies. 
+list.of.packages <- c("tidyverse",
+                      "purrr",
+                      "tidyr",
+                      "dplyr",
+                      "scales",
+                      "lubridate",
+                      "reshape2",
+                      "ggplot2",
+                      "readxl",
+                      "openxlsx",
+                      "downloadthis",
+                      "knitr",
+                      "captioner",
+                      "zoo",
+                      "gridExtra",
+                      "plotly",
+                      "htmlwidgets",
+                      "shiny")
+
+  ## Load any missing packages.
+    new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+    if(length(new.packages)) install.packages(new.packages)
+
+## Load Packages
+    library(tidyverse)
+    library(purrr)
+    library(tidyr)
+    library(dplyr)
+    library(lubridate)
+    library(reshape2)
+    library(ggplot2)
+    library(scales)
+    library(readxl)
+    library(openxlsx)
+    library(downloadthis)
+    library(knitr)
+    library(captioner)
+    library(zoo)
+    library(gridExtra)
+    library(plotly)
+    library(htmlwidgets)
+    library(formattable)
+    library(xfun)
+    library(kableExtra)
+    library(shiny)
+    
+##  Set up captioner package calls. 
+  fig_nums   <- captioner(prefix = "Figure")  
+  table_nums <- captioner(prefix = "Table")
+
+## Define Working Directory ---
+setwd("C:/Users/evogt/R Analysis/EAV/GitHubMarkdown/SimmsCreek/docs")
+
+## Define Input Files
+   #1 Load Simms Bio Data from all years
+    
+      ## Add loop for juvenile and adult
+      data_set <- c("Juvenile","Adult")
+
+      #1.1 List of all files in Directory 
+        files_list <- list.files("Data/Juvenile/", pattern = "*.xlsx", full.names = TRUE)
+   
+            # Use lapply to read in all files and store them as list elements in one list
+                list_of_dfs <- lapply(as.list(files_list), function(x) readWorkbook(x, sheet = "SimmsBioData"))
+    
+            # Create a vector of names based on the year of data collection. 
+                df_names2 <- paste0("SimmsBio_", as.numeric(str_extract(files_list, "(\\d)+")))
+                  
+            # Assign the names to our list of dfs
+                names(list_of_dfs) <- df_names2
+                  
+      #1.2 Select Columns of Interest
+           my_cols <- c("Date", "Species", "Stage", "US/DS", "Length", "Weight", "Comments")
+           dfs_list <- lapply(list_of_dfs, "[", my_cols)
+
+    #3 Join all dataframes together
+      simms_bio <-   bind_rows(dfs_list, .id = "Dataset") %>%
+                        mutate(DatasetYear = as.numeric(str_extract(Dataset, "(\\d)+")),
+                               Date = as.Date(Date, origin = "1899-12-30"),
+                               Year = as.numeric(format(Date, format = "%Y"))) %>%
+                        filter(DatasetYear == Year) %>%                                          # Filter to exclude relic data from past years
+                        rename(Direction = "US/DS") %>%
+                        mutate(Direction = recode(as.factor(Direction), 
+                                         US        = "Upstream",
+                                        'US '      = "Upstream",
+                                         UST       = "Upstream",
+                                         DS        = "Downstream",
+                                        'DS '      = "Downstream",
+                                         DST       = "Downstream"),
+                               Species = recode(as.factor(Species),
+                                                "CO"  = "CO",
+                                                "CO " = "CO",
+                                                "CT"  = "CT",
+                                                "CT " = "CT",
+                                                "CN"  = "CN",
+                                                "CN " = "CN"))
+```
+
+# Annual Fence Monitoring Effort and Catches
+
+```{r, Trap Summary, echo=FALSE, warning=FALSE, message = FALSE}
+# When trap was operated
+  ## Create Date Sequence - All dates when trap could be checked
+  date_seq <- data.frame(Date = seq(ymd('2008-04-15'), ymd('2024-06-15'), by = 'days')) %>%
+                  mutate(Month = strftime(Date, format = "%m"),
+                         Month = as.numeric(Month)) %>%
+                  filter(between(Month,4,6))
+
+  ## Which days trap was operated each year
+  trap <- simms_bio %>%
+            group_by(Date) %>%
+            summarize(n = 1) %>%
+            mutate(Year = strftime(Date, format = "%Y"))
+  
+  ## Proportion of survey period that was monitored.
+  trap_ops <- left_join(date_seq, trap, by = "Date") %>%
+              mutate(n = coalesce(n, 0)) %>%
+              group_by(Year) %>%
+              dplyr::summarize(Start = as.Date(min(Date)),
+                              End   = as.Date(max(Date)),
+                              SamplePeriod = as.numeric((End-Start)+1),
+                              DaysSampled = sum(n)) %>%
+              mutate(prop.sample.period =  percent(DaysSampled/SamplePeriod),
+                     prop.mig.period = percent(DaysSampled/75),
+                     Year  = as.numeric(Year),
+                     Start = format(Start, "%b-%d"),
+                     End   = format(End, "%b-%d"))
+  
+
+  
+
+    ## Number of Fish Tallied Annually
+  annual_tally <- simms_bio %>%
+                  ungroup %>%
+                  filter(Species == "CO" | Species == "CT") %>%
+                  group_by(Year, Species) %>%
+                  dplyr::summarise(n = n()) %>%
+                  pivot_wider(names_from = "Species", values_from = "n")
+
+## Summary Table
+summary_table <- left_join(trap_ops,annual_tally, by = "Year") %>%
+                     filter(!is.na(Year)) %>%
+                     select(1:3,5:9) %>%
+                     mutate(Total = CO + CT)
+
+```
+
+Fence monitoring starts in April and continues through late May to mid June. The first day of trap operation has ranged from `r format(min(as.Date(trap_ops$Start, "%b-%d")),"%b-%d")` to `r format(max(as.Date(trap_ops$Start, "%b-%d")), "%b-%d")` (mean = `r format(mean(as.Date(trap_ops$Start, "%b-%d")),"%b-%d")`). Once monitoring was initiated the traps were checked nearly continuously, with an average of `r round(mean(trap_ops$prop.sample.period),1)` of days being monitored. After a mean of `r round(mean(trap_ops$DaysSampled),0)` days the trap was dismantled and monitoring was ceased between `r format(min(as.Date(trap_ops$End, "%b-%d")),"%b-%d")` and `r format(max(as.Date(trap_ops$End, "%b-%d")),"%b-%d")` (mean = `r format(mean(as.Date(trap_ops$End, "%b-%d")),"%b-%d")`).
+
+Annual trap operation periods and total captures of Coastal Cutthroat Trout and Coho Salmon are presented below in Table 1.
+
+```{r display.table, echo = FALSE, warning = FALSE, message = FALSE}
+## Prepare Kable Table
+kable(summary_table,
+      "html",
+      booktabs = T,
+      align = c("c"),
+      col.names = c("Year", "Start", "End", "# Days Sampled", "Sample Period", "Migration Period", "CO", "CCT", "Total"),
+      caption = "**Table 1. Annual trap operation period, proportion of operation period that was monitored, proportion of migration period that was monitored (Apr 1 to June 15), and number of Coho Salmon and Coastal Cutthroat Trout that were tallied.**",
+      digits = 1) %>%
+  #column_spec(c(1, 3,10,17), bold = TRUE) %>%
+  kable_styling("striped", full_width =  FALSE,
+                position = "center", 
+                font_size = 12,
+                fixed_thead = TRUE) %>%
+  add_header_above(c(" " = 1, "Sample Period" = 3, "Prop. Sampled (%)"= 2, "# Fish Tallied" =3)) 
+```
+
+```{original table, echo=FALSE, warning=FALSE, message = FALSE }
+CCT_table <-  simms_bio %>% 
+                group_by(Year, Species) %>%
+                dplyr::summarize(
+                                 # Start_Date = as.Date(min(Date), "%b-%d"),
+                                 # End_Date   = as.Date(max(Date), "%b-%d"),
+                                 # Survey_Length = 1+(as.Date(End_Date) - as.Date(Start_Date)),
+                                 n          = n(),
+                                 FL_mean = mean(Length, na.rm = TRUE),
+                                 FL_SD   = sd(Length, na.rm = TRUE),
+                                 FL_min  = min(Length, na.rm = TRUE),
+                                 FL_max  = max(Length, na.rm = TRUE),
+                                 WT_mean = mean(Weight, na.rm = TRUE),
+                                 WT_min  = min(Weight, na.rm = TRUE),
+                                 WT_max  = max(Weight, na.rm = TRUE)) %>%
+                  # mutate(Start_Date = format(Start_Date, "%b-%d"),
+                  #        End_Date = format(End_Date, "%b-%d")) %>%
+                  #select("Year","Direction", "Start_Date","End_Date","Survey_Length","n","FL_mean","FL_SD","FL_min","FL_max")
+                  select(1:11)
+
+## Prepare Kable Table
+kable(CCT_table,
+      "html",
+      booktabs = T,
+      align = c("c"),
+      col.names = c("Species", "Year", "Direction","Start", "End", "Duration","Total \nCatch", "Mean", "SD", "Min", "Max"),
+      caption = "**Table 1. Total annual captures of Coastal Cutthroat Trout during spring fish fence operation on Simms Creek.**",
+      digits = 1) %>%
+  #column_spec(c(1, 3,10,17), bold = TRUE) %>%
+  kable_styling("striped", full_width =  FALSE,
+                position = "center", 
+                font_size = 12,
+                fixed_thead = TRUE) %>%
+  add_header_above(c(" " = 3, "Period" = 3, "","Fork Length (mm)" = 4)) 
+```
+
+## Coastal Cutthroat Trout
+
+As previously mentioned, I like CCT, so let's start there. We will look at the size of fish being captured, when the majority of the fish are migrating, and start to consider what may be driving some of the variability in migrants between years.
+
+### Size Distribution
+
+```{r, length-frequency all years,echo=FALSE, warning=FALSE, message = FALSE}
+## Length-Frequency Plot of all CCT captured to date.
+    ## Prepare Data
+    CT_dat <- simms_bio %>% 
+                    filter(Species == "CT",
+                           !is.na(Direction)) %>%
+                    mutate(date.std =  case_when(year(Date) >= 0 ~ 'year<-'(Date, 2024))) 
+                    
+
+      ## Prepare Plot
+      all_years.plot <- ggplot(CT_dat) +
+                            geom_histogram(aes(x = Length), binwidth = 5, color = "black", fill = "white") + 
+                            labs(x = "Fork Lenght (mm)", y = "Frequency (# Fish)") +
+                            scale_x_continuous(breaks = seq(50, 450, by = 25))+
+                            #scale_y_continuous(breaks = seq(0, 450, 50))+
+                            theme(axis.text.x = element_text(angle = 45, vjust = 1.2, hjust = 1)) +
+                            theme_bw() + 
+                            facet_grid(Direction~.)
+```
+
+```{r, length-frequency all years PRINT, echo=FALSE, fig.width = 10, fig.height = 7}
+suppressWarnings(print(all_years.plot))
+```
+
+**`r fig_nums("all_years.plot", "Length-frequency of all Coastal Cutthroat Trout captured since 2008.")`**
+
+```{r, length-frequency by year,  echo=FALSE, warning=FALSE, message = FALSE}
+## Length-Frequency Plot of CCT captured in each year
+    ## Prepare Data
+    annual.plot <- ggplot(CT_dat) +
+                        geom_histogram(aes(x = Length), binwidth = 5, color = "black", fill = "white") + 
+                        labs(x = "Fork Lenght (mm)", y = "Frequency (# Fish)") +
+                        scale_x_continuous(breaks = seq(0, 500, by = 20))+
+                        #scale_y_continuous(breaks = seq(0, 450, 50))+
+                        theme(axis.text.x = element_text(angle = 45, vjust = 1.2, hjust = 1)) +
+                        theme_bw() + 
+                        facet_grid(Year~Direction)
+```
+
+```{r, length-frequency by yearPRINT, echo=FALSE, fig.width = 14, fig.height = 35}
+suppressWarnings(print(annual.plot))
+```
+
+**`r fig_nums("annual.plot", "Length-frequency of Coastal Cutthroat Trout captured during annual monitoring.")`**
+
+### Capture Timing
+
+```{r,  echo=FALSE, warning=FALSE, message = FALSE}
+## Prep Data
+    ## Catch Data
+    CCT_catch <- simms_bio %>% 
+                 filter(Species == "CT") %>%
+                 group_by(Date, Direction) %>%
+                 summarize(catch = n()) %>%
+                 mutate(Year = strftime(Date, format = "%Y")) %>%
+                 ungroup() %>%
+                 group_by(Year) %>%
+                 mutate(cum_catch   = cumsum(catch),
+                        total_catch = max(cum_catch),
+                        prop        = cum_catch/total_catch,
+                        date.std    = case_when(year(Date) >= 0 ~ 'year<-'(Date, 2024)))
+
+    # ## Date Sequence
+    # date_seq <- data.frame(Date = as.Date(seq(ymd('2008-04-15'), ymd('2025-06-15'), by = 'days'))) %>%
+    #                         mutate(Month = strftime(Date, format = "%m"),
+    #                                Month = as.numeric(Month)) %>%
+    #                         filter(between(Month,4,6))
+    #                         
+    # 
+    # ## Join date_seq w. catch data
+    # catch_daily <- left_join(date_seq, CCT_DS, by = "Date") %>%
+    #                    mutate(catch = coalesce(catch, 0),  
+    #                           Year = strftime(Date, format = "%Y"),
+    #                           Year = as.numeric(Year),
+    #                           Month = strftime(Date, format = "%m"),
+    #                           Month = as.numeric(Month),
+    #                           Weeknum = strftime(Date, format = "%V"),
+    #                           Weeknum = as.numeric(Weeknum))
+    # 
+    # ## 
+    # CCT_catchDS <- CCT_catch %>% 
+    #                filter(Direction == "Downstream") %>%
+    #                mutate(date.std = case_when(year(Date) >= 0 ~ 'year<-'(Date, 2024))) 
+    
+    daily_catch <- ggplot(CCT_catch) + 
+                      geom_line(aes(x = date.std, y = prop, color = Direction)) +
+                      labs(x = "", y = "Proportion of Total Annual Catch") +
+                      scale_x_date(date_minor_breaks = "1 day", 
+                           date_breaks = '1 week', 
+                           date_labels = '%b-%d', 
+                           limits = c(as.Date("2024-04-01"), as.Date("2024-06-15"))) +
+                      facet_grid(Year~.) +
+                      theme(legend.position = "bottom") +
+                      theme_bw()
+
+```
+
+```{r, daily_catches, echo=FALSE, fig.width = 10, fig.height = 15}
+suppressWarnings(print(daily_catch))
+```
+
+**`r fig_nums("daily_catch", "Proportion of total annual upstream and downstream catches.")`**
+
+```{r}
+all_catches <- simms_bio %>% 
+               group_by(Species, Date, Direction) %>%
+               summarize(catch = n()) %>%
+               mutate(Year = strftime(Date, format = "%Y")) %>%
+               ungroup() %>%
+               group_by(Year) %>%
+               mutate(cum_catch   = cumsum(catch),
+                      total_catch = max(cum_catch),
+                      prop        = cum_catch/total_catch,
+                      date.std    = case_when(year(Date) >= 0 ~ 'year<-'(Date, 2024))) %>%
+               filter(!is.na(Direction))
+    
+daily_box <- ggplot(all_catches) + 
+                    geom_line(aes(x = date.std, y = catch, color = Species)) +
+                    labs(x = "", y = "Proportion of Total Annual Catch") +
+                    scale_x_date(date_minor_breaks = "1 day", 
+                           date_breaks = '1 week',
+                           date_labels = '%b-%d',
+                           limits = c(as.Date("2024-04-01"), as.Date("2024-06-15"))) +
+                    facet_grid(Year~Direction) +
+                    theme(legend.position = "bottom") +
+                    theme_bw() 
+```
+
+```{r, daily_box, echo=FALSE, fig.width = 10, fig.height = 15}
+suppressWarnings(print(daily_box))
+```
+
+**`r fig_nums("daily_box", "Boxplot showing range of captures of CCT and CO salmon.")`**
+
+## Coho Salmon

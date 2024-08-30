@@ -30,8 +30,7 @@ Historic fish observations indicate that Chum, Chinook, Pink and Coho Salmon hav
 
 [Greenways Land Trust](https://www.greenwaystrust.ca/) has supported Simms Creek Stewards for +20 years, including operation of a fish fence near the mouth of the stream since 2008. Juvenile and adult fish moving past the fence are tallied each spring and fall, respectively. The objective of this project is to explore the juvenile fence dataset. All work is being done strictly for fun and out of personal curiosity. Any feedback, input, or support is welcome. Also, I have a soft spot for Coastal Cutthroat Trout (CCT), so be warned that all analysis will be trout heavy.
 
-```{r prep working environment, echo=FALSE, warning=FALSE, message = FALSE}
-## Prepare Working Environment ----
+```{r Prep working environment, echo=FALSE, warning=FALSE, message = FALSE}
 ## Clear workspace ##
 rm(list = ls())  
 
@@ -91,51 +90,321 @@ list.of.packages <- c("tidyverse",
   table_nums <- captioner(prefix = "Table")
 
 ## Define Working Directory ---
-setwd("C:/Users/evogt/R Analysis/EAV/GitHubMarkdown/SimmsCreek/docs")
-
-## Define Input Files
-   #1 Load Simms Bio Data from all years
-      #1.1 List of all files in Directory 
-        files_list <- list.files("Data/", pattern = "*.xlsx", full.names = TRUE)
-   
-            # Use lapply to read in all files and store them as list elements in one list
-                list_of_dfs <- lapply(as.list(files_list), function(x) readWorkbook(x, sheet = "SimmsBioData"))
-    
-            # Create a vector of names based on the year of data collection. 
-                df_names2 <- paste0("SimmsBio_", as.numeric(str_extract(files_list, "(\\d)+")))
-                  
-            # Assign the names to our list of dfs
-                names(list_of_dfs) <- df_names2
-                  
-      #1.2 Select Columns of Interest
-           my_cols <- c("Date", "Species", "Stage", "US/DS", "Length", "Weight", "Comments")
-           dfs_list <- lapply(list_of_dfs, "[", my_cols)
-
-    #3 Join all dataframes together
-      simms_bio <-   bind_rows(dfs_list, .id = "Dataset") %>%
-                        mutate(DatasetYear = as.numeric(str_extract(Dataset, "(\\d)+")),
-                               Date = as.Date(Date, origin = "1899-12-30"),
-                               Year = as.numeric(format(Date, format = "%Y"))) %>%
-                        filter(DatasetYear == Year) %>%                                          # Filter to exclude relic data from past years
-                        rename(Direction = "US/DS") %>%
-                        mutate(Direction = recode(as.factor(Direction), 
-                                         US        = "Upstream",
-                                        'US '      = "Upstream",
-                                         UST       = "Upstream",
-                                         DS        = "Downstream",
-                                        'DS '      = "Downstream",
-                                         DST       = "Downstream"),
-                               Species = recode(as.factor(Species),
-                                                "CO"  = "CO",
-                                                "CO " = "CO",
-                                                "CT"  = "CT",
-                                                "CT " = "CT",
-                                                "CN"  = "CN",
-                                                "CN " = "CN"))
+# setwd("C:/Users/evogt/R Analysis/EAV/GitHubMarkdown/SimmsCreek/docs")
 ```
 
-# Annual Fence Monitoring Effort and Catches
+```{r Load and Format Data, echo = FALSE, warning = FALSE, message = FALSE}
+# Load Juvenile and Adult Bio Data ----
+   data_sets <- c("Juvenile","Adult")
 
+      for(i in data_sets){
+            #1.1 List of all files in Directory 
+            files_list <- list.files(paste0("Data/",i ,"/"), pattern = "*.xlsx", full.names = TRUE)
+            
+                # Use lapply to read in all files and store them as list elements in one list
+                list_of_dfs <- lapply(as.list(files_list), function(x) readWorkbook(x, sheet = "SimmsBioData"))
+        
+                # Create a vector of names based on the year of data collection. 
+                df_names2 <- paste0(i,"_SimmsBio_", as.numeric(str_extract(files_list, "(\\d)+")))
+                
+                # Assign the names to our list of dfs
+                names(list_of_dfs) <- df_names2
+          
+          #1.2 Dunno what this does...
+           dfs_list <-lapply(list_of_dfs, "[")
+               # my_cols <- c("Date", "Species", "Stage", "US/DS", "Length", "Weight", "Comments")
+         
+          #1.3 Prepare final dataframe
+          df <-   bind_rows(dfs_list, .id = "Dataset")
+          
+             ## Rename dataframe based on looping variable (e.g., Juvenile or Adult)
+             assign(paste("simms_bio_",i, sep=""), df) %>%
+              mutate(MonitorPeriod = i)
+      }
+
+    ### Format Juvenile Data ----
+    juv <- simms_bio_Juvenile %>%
+           mutate(Period = "Spring",
+                  Sex = "",
+                  DatasetYear = as.numeric(str_extract(Dataset, "(\\d)+")),
+                  Date = as.Date(Date, origin = "1899-12-30"),
+                  Year = as.numeric(format(Date, format = "%Y"))) %>%
+           filter(DatasetYear == Year) %>%                                          # Filter to exclude relic data from past years
+           rename(Direction = "US/DS") %>%
+           select("Dataset","Period", "Date", "Species", "Stage","Sex", "Direction", "Length", "Weight", "Comments")
+
+    ### Format Adult Data ----
+    adult <- simms_bio_Adult %>%
+             mutate(Period = "Fall",
+                    Stage = "",
+                    DatasetYear = as.numeric(str_extract(Dataset, "(\\d)+")),
+                    Date = as.Date(Date, origin = "1899-12-30"),
+                    Year = as.numeric(format(Date, format = "%Y"))) %>%
+             filter(DatasetYear == Year) %>%                                          # Filter to exclude relic data from past years
+             rename(Direction = "US/DS") %>%
+             select("Dataset","Period","Date", "Species", "Stage","Sex", "Direction", "Length", "Weight", "Comments")
+
+      ### Join Juvenile and Adult Datasets ----
+          simms_bio_all <- rbind(juv,adult) %>%
+                           mutate(Direction = recode(as.factor(Direction),
+                                                   US        = "Upstream",
+                                                  'US '      = "Upstream",
+                                                   UST       = "Upstream",
+                                                   DS        = "Downstream",
+                                                  'DS '      = "Downstream",
+                                                   DST       = "Downstream"),
+                                Species = recode(as.factor(Species),
+                                                 "CO"  = "CO",
+                                                 "CO " = "CO",
+                                                 " CO" = "CO",
+                                                 "CO-J"= "CO-J",
+                                                 "JK"  = "CO-J",
+                                                 "CT"  = "CT",
+                                                 "CT " = "CT",
+                                                 "CN"  = "CN",
+                                                 "CN " = "CN",
+                                                 "CH"  = "CN",
+                                                 "PK" = "PK"),
+                                Species = factor(Species, 
+                                                 levels = c("CT","CO", "CO-J","CN","CM","PK")))
+
+# Load Environmental Data ----
+      for(i in data_sets){
+            #1.1 List of all files in Directory 
+            files_list <- list.files(paste0("Data/",i ,"/"), pattern = "*.xlsx", full.names = TRUE)
+        
+           # files_list <- list.files(paste0("Data/Adult/"), pattern = "*.xlsx", full.names = TRUE)
+            
+                # Use lapply to read in all files and store them as list elements in one list
+                list_of_dfs <- lapply(as.list(files_list), function(x) readWorkbook(x, sheet = "SimmsCreek", cols = 1:10))
+
+                # Create a vector of names based on the year of data collection. 
+                df_names2 <- paste0(i,"_SimmsEnv_", as.numeric(str_extract(files_list, "(\\d)+")))
+                
+                # Assign the names to our list of dfs
+                names(list_of_dfs) <- df_names2
+          
+          #1.2 Dunno what this does...
+          # dfs_list <-lapply(list_of_dfs, "[")
+            dfs_list <- lapply(list_of_dfs, "[")
+          
+         
+          #1.3 Prepare final dataframe
+          df <-   bind_rows(dfs_list, .id = "Dataset") %>%
+                     mutate(MonitorPeriod = i)
+          
+         ## Rename dataframe based on looping variable (e.g., Juvenile or Adult)
+         assign(paste("simms_env_",i, sep=""), df) 
+      }    
+    
+    ## Rename simms env. variables
+    simms_env_Juvenile <- simms_env_Juvenile %>%
+                          rename(pH = "PH",
+                                 Gauge = "Staff.Gauge")
+    
+    #### Join Env. Datasets ----
+    simms_env <- rbind(simms_env_Juvenile,simms_env_Adult) %>%
+               mutate(Period = ifelse(MonitorPeriod == "Adult","Fall","Spring"),
+                      DatasetYear = as.numeric(str_extract(Dataset, "(\\d)+")),
+                      Date = as.Date(Date, origin = "1899-12-30"),
+                      Time = format(as.POSIXct(Time), "%I:%M %p"),
+                      Year = as.numeric(format(Date, format = "%Y")),
+                      binary = 1) %>%
+               filter(DatasetYear == Year)
+    
+
+# Join Bio and Env Data ----
+     # Create Date Sequence    
+      date_seq <- data.frame(Date = seq(ymd('2008-04-15'), ymd('2024-06-15'), by = 'days')) %>%
+                      mutate(Month = strftime(Date, format = "%m"),
+                             Month = as.numeric(Month))
+
+    # Join Data to Date Sequence
+    all_dat <- left_join(date_seq,simms_env, by = c("Date"), suffix = c("","_Env")) %>%
+               left_join(., simms_bio_all, by = c("Date","Period"), suffix = c("","_Bio")) %>%
+               mutate(Year = as.numeric(format(Date, format = "%Y")),
+                      Period = factor(Period, levels = c("Spring","Fall"))) %>%
+               select(Year, Period, Date, Month, Time,    Air.Temp, Water.Temp, 
+                      pH,   DO,     TDS,  Gauge, Weather, Species, Length, Weight)
+```
+
+# Annual Fence Monitoring Effort
+```{r Master Catch Summary, echo=FALSE, warning=FALSE, message = FALSE, include = FALSE}
+# Master Trap Summary ----
+## Trap Effort ----
+trap_effort <- all_dat %>% 
+               group_by(Year, Period, Date) %>%
+               summarize(binary = 1) %>%
+               ungroup() %>%
+               group_by(Year, Period) %>%
+               summarize(trap_days = sum(binary),
+                         start = min(Date),
+                         end   = max(Date)) %>%
+               filter(complete.cases(Period))
+
+
+## Catch by Year and Period ----
+    spp <- c("CO", "CT")
+    # for loop to summarize CO and CT catch data 
+    for(i in spp){
+      
+        x <- all_dat %>%  
+             filter(Species == i) %>%
+             group_by(Year, Period, Species) %>%
+             summarize(n = n(),
+                       n = coalesce(n,0),
+                       Date_min = min(Date, na.rm=T),
+                       Date_med = median(Date, na.rm=T),
+                       Date_max = max(Date, na.rm=T),
+                       FL_mean = mean(Length, na.rm = T),
+                       FL_min  = min(Length, na.rm = T),
+                       FL_max  = max(Length, na.rm = T),
+                       FL_SD   = sd(Length, na.rm = T))
+
+
+          ## Create DFs named "catch_CT" and "catch_CO"
+          assign(paste0("catch_", i, sep = ""), x)
+    }
+    
+    catch_summary <- left_join(trap_effort, catch_CT, by = c("Year", "Period"), suffix = c("","_CT")) %>%
+                          left_join(.,catch_CO, by = c("Year","Period"), suffix = c("CT","CO")) %>%
+                      select("Year", "Period", "start","end", "trap_days", 
+                             "nCT", "Date_medCT","Date_minCT", "Date_maxCT", "FL_meanCT", "FL_SDCT", "FL_minCT", "FL_maxCT",
+                             "nCO", "Date_medCO","Date_minCO", "Date_maxCO", "FL_meanCO", "FL_SDCO", "FL_minCO", "FL_maxCO") %>%
+                      mutate(start = format(start, "%b-%d"),
+                             end   = format(end, "%b-%d"),
+                             Date_medCT = format(Date_medCT, "%b-%d"),
+                             Date_minCT = format(Date_minCT, "%b-%d"),
+                             Date_maxCT = format(Date_maxCT, "%b-%d"),
+                             Date_medCO = format(Date_medCO, "%b-%d"),
+                             Date_minCO = format(Date_minCO, "%b-%d"),
+                             Date_maxCO = format(Date_maxCO, "%b-%d")) %>%
+                     mutate_at(vars(nCT,nCO), ~replace_na(.,0))
+## Kable - Master Summary ----
+options(knitr.kable.NA = '-')
+
+kable(catch_summary,
+      "html",
+      booktabs = T,
+      
+      align = c("c"),
+      col.names = c("Year", "Period", "Start", "End", "# Days Sampled",  
+                    "n","Med.","Min","Max", "Mean", "SD" ,"Min","Max",
+                    "n","Med.","Min","Max", "Mean", "SD" ,"Min","Max"),
+      caption = "**Table 1. Trapping summary.**",
+      digits = 1) %>%
+  #column_spec(c(1, 3,10,17), bold = TRUE) %>%
+  kable_styling("striped", full_width =  FALSE,
+                position = "center", 
+                font_size = 12,
+                fixed_thead = TRUE) %>%
+  add_header_above(c(" " = 2, "Sample Period" = 3, 
+                     "Capture Timing" = 4,"Fork Length (mm)" = 4,
+                     "Capture Timing" = 4,"Fork Length (mm)" = 4)) %>%
+  add_header_above(c(" " = 5, "Coastal Cutthroat Trout" = 8, "Coho Salmon" = 8)) 
+```
+
+
+```{r CT Catch Summary, echo=FALSE, warning=FALSE, message = FALSE}
+## Prep Data ----
+CT_catch <- catch_summary %>%
+            select(1:13) %>%  # Select CT Data
+            pivot_wider(names_from = Period, values_from = 3:13) %>%
+            select(1, ends_with("Spring"), ends_with("Fall")) %>%
+            ungroup() %>%
+            add_row(Year = c(2020, 2021, 2023)) %>%
+            arrange(Year)
+
+
+## CT Kable ----
+kable(CT_catch,
+      "html",
+      booktabs = T,
+      align = c("c"),
+      col.names = c("Year","Start", "End", "# Days Sampled",  
+                    "n","Med.","Min","Max", "Mean", "SD" ,"Min","Max",
+                    "Start", "End", "# Days Sampled",  
+                    "n","Med.","Min","Max", "Mean", "SD" ,"Min","Max"),
+      caption = "**Table 1. Spring and Fall Trapping of Coastal Cutthroat Trout.**",
+      digits = 1) %>%
+  #column_spec(c(1, 3,10,17), bold = TRUE) %>%
+  kable_styling("striped", full_width =  FALSE,
+                position = "center", 
+                font_size = 12,
+                fixed_thead = TRUE) %>%
+  add_header_above(c(" "=1, "Sample Period" = 3, "Capture Timing" = 4,"Fork Length (mm)" = 4,
+                     "Sample Period" = 3, "Capture Timing" = 4,"Fork Length (mm)" = 4)) %>%
+  add_header_above(c(" " = 1,"Spring" = 11, "Fall" = 11)) 
+ 
+```
+```{r CCT - cumulative catch,echo=FALSE, warning=FALSE, message = FALSE }
+    ## Catch Data
+colnames(all_dat)
+
+    CCT_catch <- all_dat %>% 
+                 filter(Species == "CT", Period == "Spring") %>%
+                 group_by(Date) %>%
+                 summarize(catch = n()) %>%
+                 mutate(Year = strftime(Date, format = "%Y")) %>%
+                 ungroup() %>%
+                 group_by(Year) %>%
+                 mutate(cum_catch   = cumsum(catch),
+                        total_catch = max(cum_catch),
+                        prop        = cum_catch/total_catch,
+                        date.std    = case_when(year(Date) >= 0 ~ 'year<-'(Date, 2024)))
+    colnames(CCT_catch)
+    
+    ggplot(CCT_catch) +
+        geom_line(aes(x= date.std, y = prop, color = Year)) +
+        labs(x = "", y = "Proportion of Total Catch (%)") +
+        theme_bw()
+
+```
+
+
+```{r CT Size Distribution, length-frequency all years,echo=FALSE, warning=FALSE, message = FALSE}
+## Length-Frequency Plot of all CCT captured to date.
+    ## Prepare Data
+    CT_dat <- all_dat %>% 
+                    filter(Species == "CT") %>%
+                    mutate(date.std =  case_when(year(Date) >= 0 ~ 'year<-'(Date, 2024))) 
+                    
+
+      ## Prepare Plot
+      all_years.plot <- ggplot(CT_dat) +
+                            geom_histogram(aes(x = Length), binwidth = 5, color = "black", fill = "white") + 
+                            labs(x = "Fork Lenght (mm)", y = "Frequency (# Fish)") +
+                            scale_x_continuous(breaks = seq(50, 450, by = 25))+
+                            #scale_y_continuous(breaks = seq(0, 450, 50))+
+                            theme(axis.text.x = element_text(angle = 45, vjust = 1.2, hjust = 1)) +
+                            theme_bw() +
+                            facet_grid(Year~.)
+```
+
+
+
+```{r}
+catch_long <- all_dat %>%
+              group_by(Year, Period, Species) %>%
+              summarize(n = n()) %>%
+              filter(!is.na(Period),
+                     !is.na(Species)) 
+
+
+
+ggplot(catch_long) +
+  geom_col(aes(x = Year, y = n)) + 
+  facet_grid(Species~Period)
+```
+
+
+
+```{r exit}
+knitr::knit_exit()
+```
+
+
+# Annual Fence Monitoring Effort and Catches
 ```{r, Trap Summary, echo=FALSE, warning=FALSE, message = FALSE}
 # When trap was operated
   ## Create Date Sequence - All dates when trap could be checked
@@ -145,7 +414,7 @@ setwd("C:/Users/evogt/R Analysis/EAV/GitHubMarkdown/SimmsCreek/docs")
                   filter(between(Month,4,6))
 
   ## Which days trap was operated each year
-  trap <- simms_bio %>%
+  trap <- juv %>%
             group_by(Date) %>%
             summarize(n = 1) %>%
             mutate(Year = strftime(Date, format = "%Y"))
@@ -168,7 +437,7 @@ setwd("C:/Users/evogt/R Analysis/EAV/GitHubMarkdown/SimmsCreek/docs")
   
 
     ## Number of Fish Tallied Annually
-  annual_tally <- simms_bio %>%
+  annual_tally <- simms_bio_all %>%
                   ungroup %>%
                   filter(Species == "CO" | Species == "CT") %>%
                   group_by(Year, Species) %>%
@@ -244,27 +513,7 @@ kable(CCT_table,
 
 As previously mentioned, I like CCT, so let's start there. We will look at the size of fish being captured, when the majority of the fish are migrating, and start to consider what may be driving some of the variability in migrants between years.
 
-### Size Distribution
 
-```{r, length-frequency all years,echo=FALSE, warning=FALSE, message = FALSE}
-## Length-Frequency Plot of all CCT captured to date.
-    ## Prepare Data
-    CT_dat <- simms_bio %>% 
-                    filter(Species == "CT",
-                           !is.na(Direction)) %>%
-                    mutate(date.std =  case_when(year(Date) >= 0 ~ 'year<-'(Date, 2024))) 
-                    
-
-      ## Prepare Plot
-      all_years.plot <- ggplot(CT_dat) +
-                            geom_histogram(aes(x = Length), binwidth = 5, color = "black", fill = "white") + 
-                            labs(x = "Fork Lenght (mm)", y = "Frequency (# Fish)") +
-                            scale_x_continuous(breaks = seq(50, 450, by = 25))+
-                            #scale_y_continuous(breaks = seq(0, 450, 50))+
-                            theme(axis.text.x = element_text(angle = 45, vjust = 1.2, hjust = 1)) +
-                            theme_bw() + 
-                            facet_grid(Direction~.)
-```
 
 ```{r, length-frequency all years PRINT, echo=FALSE, fig.width = 10, fig.height = 7}
 suppressWarnings(print(all_years.plot))

@@ -1,0 +1,47 @@
+"0","# When trap was operated
+  ## Create Date Sequence - All dates when trap could be checked
+  date_seq <- data.frame(Date = seq(ymd('2008-04-15'), ymd('2024-06-15'), by = 'days')) %>%
+                  mutate(Month = strftime(Date, format = ""%m""),
+                         Month = as.numeric(Month)) %>%
+                  filter(between(Month,4,6))
+
+  ## Which days trap was operated each year
+  trap <- simms_bio %>%
+            group_by(Date) %>%
+            summarize(n = 1) %>%
+            mutate(Year = strftime(Date, format = ""%Y""))
+  
+  ## Proportion of survey period that was monitored.
+  trap_ops <- left_join(date_seq, trap, by = ""Date"") %>%
+              mutate(n = coalesce(n, 0)) %>%
+              group_by(Year) %>%
+              dplyr::summarize(Start = as.Date(min(Date)),
+                              End   = as.Date(max(Date)),
+                              SamplePeriod = as.numeric((End-Start)+1),
+                              DaysSampled = sum(n)) %>%
+              mutate(prop.sample.period =  percent(DaysSampled/SamplePeriod),
+                     prop.mig.period = percent(DaysSampled/75),
+                     Year  = as.numeric(Year),
+                     Start = format(Start, ""%b-%d""),
+                     End   = format(End, ""%b-%d""))
+  
+
+  
+
+    ## Number of Fish Tallied Annually
+  annual_tally <- simms_bio %>%
+                  ungroup %>%
+                  filter(Species == ""CO"" | Species == ""CT"") %>%
+                  group_by(Year, Species) %>%
+                  dplyr::summarise(n = n()) %>%
+                  pivot_wider(names_from = ""Species"", values_from = ""n"")
+
+## Summary Table
+summary_table <- left_join(trap_ops,annual_tally, by = ""Year"") %>%
+                     filter(!is.na(Year)) %>%
+                     select(1:3,5:9) %>%
+                     mutate(Total = CO + CT)
+"
+"2","'Load' is not recognized as an internal or external command,
+operable program or batch file.
+"
