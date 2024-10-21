@@ -1,0 +1,34 @@
+"0","    CCT_catch <- left_join(date_seq, CCT_catch.prep, by = c(""Date"", ""Month"")) %>%
+                    mutate(Year = strftime(Date, format = ""%Y""),
+                           Species = ""CT"",
+                           Period = ""Spring"",
+                           Catch = ifelse(Length >0,1,0),) %>%
+                     group_by(Date) %>%
+                     summarize(catch = sum(Catch)) %>%
+                     mutate(catch = coalesce(catch,0),
+                            Year = strftime(Date, format = ""%Y"")) %>%
+                     ungroup() %>%
+                     group_by(Year) %>%
+                     mutate(cum_catch   = cumsum(catch),
+                            total_catch = max(cum_catch),
+                            prop        = cum_catch/total_catch,
+                            date.std    = case_when(year(Date) >= 0 ~ 'year<-'(Date, 2024)),
+                            week.std    = week(date.std)) %>%
+                      filter(date.std >= as.Date(""2024-04-15""),
+                             date.std <= as.Date(""2024-06-15"")) %>%
+                      # mutate(Decade = round(as.numeric(Year), -1))
+                      mutate(Decade = floor_decade(as.numeric(Year)))
+"
+"1","[1m[33mError[39m in `mutate()`:[22m
+[38;5;232m[36mℹ[38;5;232m In argument: `Decade = floor_decade(as.numeric(Year))`.
+[36mℹ[38;5;232m In group 1: `Year = ""2008""`.[39m
+[1mCaused by error in `floor_decade()`:[22m
+[33m![39m could not find function ""floor_decade""
+Backtrace:
+[90m 1. [39m... %>% mutate(Decade = floor_decade(as.numeric(Year)))
+[90m 3. [39m[1m[94mdplyr:::mutate.data.frame([39m[22m., Decade = floor_decade(as.numeric(Year))[1m[94m)[39m[22m
+[90m 4. [39mdplyr:::mutate_cols(.data, dplyr_quosures(...), by)
+[90m 6. [39mdplyr:::mutate_col(dots[[i]], data, mask, new_columns)
+[90m 7. [39mmask$eval_all_mutate(quo)
+[90m 8. [39m[1mdplyr[22m (local) eval()
+"
