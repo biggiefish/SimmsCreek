@@ -1,0 +1,4 @@
+"0","```r
+hab_dat <- read_excel(\"Data/1300-05_Hyacinthe Creek_Spring_2_DS of McKercher Creek_FHAPSummaryTables.xlsx\", sheet = \"Data - Habitat\") 
+
+```"

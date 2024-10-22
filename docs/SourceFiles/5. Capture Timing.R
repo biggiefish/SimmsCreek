@@ -17,23 +17,20 @@
            source("SourceFiles/4. Annual Captures.R"))
     
     
-    min.pass.date <- Spring.Catch %>%
-      group_by(Species, Year) %>%
-      filter(prop<0.5) %>%
-      summarize(minPass = max(Date, na.rm = T),
-                minPass.std = max(date.std, na.rm = T)) %>%
-      ungroup() %>%
-      mutate(mean.min = mean(minPass.std))
-    
-    max.pass.date <- Spring.Catch %>%
-      group_by(Species, Year) %>%
-      filter(prop>0.5) %>%
-      summarize(maxPass = min(Date, na.rm = T),
-                maxPass.std = min(date.std, na.rm = T)) %>%
-      ungroup() %>%
-      mutate(mean.max = mean(maxPass.std))
-    
-    pass.date <- left_join(min.pass.date, max.pass.date, by = "Year")
+    pass.period <- catch_annual_table %>%
+                        mutate(Date_min.std = case_when(year(Date_min) >= 0 ~ 'year<-'(Date_min, 2024)),
+                               Date_med.std = case_when(year(Date_med) >= 0 ~ 'year<-'(Date_med, 2024)),
+                               Date_max.std = case_when(year(Date_max) >= 0 ~ 'year<-'(Date_max, 2024))) %>%
+                        group_by(Period, Species) %>%
+                        summarize(minPass.min  = min(Date_min.std, na.rm = T),
+                                  minPass.sd   = sd(Date_min.std, na.rm = T),
+                                  minPass.Avg  = mean(Date_min.std, na.rm = T),
+                                  maxPass.max  = max(Date_max.std, na.rm =T),
+                                  maxPass.sd   = sd(Date_max.std, na.rm =T),
+                                  maxPass.Avg  = mean(Date_max.std, na.rm =T))
+    pass.period.spring <- pass.period %>% filter(Period == "Spring")
+    pass.period.fall <- pass.period %>% filter(Period == "Fall")
+   
     
     
 
@@ -164,7 +161,7 @@
     catch_timing_plot.Fall.CO <- catch_timing_plots[[2]][[1]] +
                                     geom_label(data = labels, 
                                                aes(label = YYYEAR),
-                                               x = as.Date("2024-10-15"), 
+                                               x = as.Date("2024-09-15"), 
                                                y = 100,
                                                hjust = "left", 
                                                vjust = 0,

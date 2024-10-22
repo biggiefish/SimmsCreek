@@ -23,13 +23,31 @@ editor_options:
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-# Intro
+# 1. Introduction
 
 Simms Creek is a small, 3rd order stream that drains an area of \~1,800 ha into the Salish Sea, near Campbell River's Willow Point neighborhood. The lower reach of Simms Creek (\~3 km of channel, east of Jubilee Road), is contained within a narrow urban green way that is bordered by residential properties. From Jubilee Road to the Inland Highway the stream is protected within [Beaver Lodge Lands](https://campbellriver.travel/news/forestry-guide-to-beaver-lodge-lands/), upstream of the Inland Highway, \>1.5 km of tributary channel is located within private forest lands.
 
-Historic fish observations indicate that Chum, Chinook, Pink and Coho Salmon have all been observed in the stream, as well as Coastal Cutthroat Trout, Rainbow Trout and Steelhead. Recent records, this dataset, suggest that Coho Salmon and Coastal Cutthroat Trout are the primary species within Simms Creek, both of which utilize the stream year round - though a small number of juvenile Chinook Salmon were identified in 2024.
+Historic fish observations indicate that Chum, Chinook, Pink and Coho Salmon have all been observed in the stream, as well as Coastal Cutthroat Trout, Rainbow Trout and Steelhead. More recent monitoring (aka this dataset), suggest that Coho Salmon and Coastal Cutthroat Trout are the primary species within Simms Creek, both of which utilize the stream year round - though a small number of juvenile Chinook Salmon were identified in 2024.
 
-[Greenways Land Trust](https://www.greenwaystrust.ca/) has supported Simms Creek Stewards for +20 years, including operation of a fish fence near the mouth of the stream since 2008. Juvenile and adult fish moving past the fence are tallied each spring and fall, respectively. The objective of this project is to explore the juvenile fence dataset. All work is being done strictly for fun and out of personal curiosity. Any feedback, input, or support is welcome. Also, I have a soft spot for Coastal Cutthroat Trout (CCT), so be warned that all analysis will be trout heavy.
+[Greenways Land Trust](https://www.greenwaystrust.ca/) has supported Simms Creek Stewards for +20 years, including operation of a fish fence near the mouth of the stream since 2008. Juvenile and adult fish moving past the fence are tallied each spring and fall, respectively. The objective of this project is to explore the juvenile fence dataset. All work is being done strictly for fun and out of personal curiosity. Any feedback, input, or support is welcome. Also, I have a soft spot for Coastal Cutthroat Trout (CCT), so be warned that effort may be slightly trout biased.
+
+Throughout this analysis, I will aim to answer the following questions:
+
+1.  What species are utilizing Simms Creek?
+
+2.  Is current fence operation program capturing the complete migration period? 
+
+3.  For each species, when are key behaviours occuring (e.g., when is peak smolt? when do adults arrive?).
+
+4.  How large are fish encountered during smolt and upstream migration periods? What age classes are migrating (I don't have scale data, but we can make an educated guess).
+
+5.  What is the freshwater survival of Coho Salmon? Note that we cannot estimate marine survival without some information on individual fish (i.e., coded wire tag data to verify that returning adults originated in Simms Creek and when they smolted).
+
+6.  What proportion of returning Coho Salmon are hatchery origin? Have any hatchery origin trout been encountered (not actually sure if there aer many hatchery reared trout at the moment, and if so, if they are marked).
+
+7.  What factors may be contributing to observed trends in abundance?
+
+But before we can do that, lets take a look at what has been completed to date. It's a tremendous amount of work and all volunteers and supporters should be commended!
 
 ```{r 1. Load and Format Data, echo = FALSE, warning = FALSE, message = FALSE}
 ## Clear workspace ##
@@ -40,17 +58,20 @@ rm(list = ls())
 
 ## Load Trap Effort Data
 source("SourceFiles/2. Trapping Effort.R")
+
 ```
 
+# 2. Fence Monitoring
 
-# Overview of Fence Monitoring Effort
-The Simms Creek fish fence has operated annually since 2008, with the exception of 2020-21 when operations were paused due to the COVID-19 Pandemic and in the spring of 2023 when federal employees were on strike. 
+The Simms Creek fish fence has operated annually since 2008, with the exception of 2020 and 2021 when operations were paused due to the COVID-19 Pandemic and in the spring of 2023 when federal employees were on strike.
 
-### Spring Monitoring Effort
+## 2.1 Fence Monitoring Effort
 
-Spring surveys target out migrating juvenile Coho Salmon but also capture an impressive number of Coastal Cutthroat Trout and have even captured some Chinook Salmon. Spring fence monitoring has started as early as `r format(min(trap_plot$date.std[trap_plot$Period=="Spring"]), "%B %d")`, however, most surveys (50%) don't start until `r format(min(trap_plot$date.std[trap_plot$Period=="Spring" & trap_plot$prop.sampled >= 0.5]), "%B %d")`. In each monitoring year, the fence has operated  continuously (e.g., sampling occurred at least daily) from `r format(min(trap_plot$date.std[trap_plot$Period=="Spring" & trap_plot$prop.sampled == 1.0]), "%B %d")` to `r format(max(trap_plot$date.std[trap_plot$Period=="Spring" & trap_plot$prop.sampled == 1.0]), "%B %d")`. Surveys have continued as late as `r format(max(trap_plot$date.std[trap_plot$Period=="Spring"]), "%B %d")`, but most (50%) are terminated by `r format(max(trap_plot$date.std[trap_plot$Period=="Spring" & trap_plot$prop.sampled==0.5]), "%B %d")`.
+### 2.1.1 Spring Monitoring
 
-### Fall Monitoring Effort
+Spring surveys target out migrating juvenile Coho Salmon but also capture an impressive number of Coastal Cutthroat Trout and have even captured some Chinook Salmon. Spring fence monitoring has started as early as `r format(min(trap_plot$date.std[trap_plot$Period=="Spring"]), "%B %d")`, however, most surveys (50%) don't start until `r format(min(trap_plot$date.std[trap_plot$Period=="Spring" & trap_plot$prop.sampled >= 0.5]), "%B %d")`. In each monitoring year, the fence has operated continuously (e.g., sampling occurred at least daily) from `r format(min(trap_plot$date.std[trap_plot$Period=="Spring" & trap_plot$prop.sampled == 1.0]), "%B %d")` to `r format(max(trap_plot$date.std[trap_plot$Period=="Spring" & trap_plot$prop.sampled == 1.0]), "%B %d")`. Surveys have continued as late as `r format(max(trap_plot$date.std[trap_plot$Period=="Spring"]), "%B %d")`, but most (50%) are terminated by `r format(max(trap_plot$date.std[trap_plot$Period=="Spring" & trap_plot$prop.sampled==0.5]), "%B %d")`.
+
+### 2.1.2 Fall Monitoring
 
 Fall surveys to count the number returning adult Coho, Chinook, Chum and Pink Salmon and also intercept a small number of Cutthroat Trout. In the fall, surveys have started as early as `r format(min(trap_plot$date.std[trap_plot$Period=="Fall"]), "%B %d")`, however, most surveys (50%) have started on `r format(min(trap_plot$date.std[trap_plot$Period=="Fall" & trap_plot$prop.sampled >= 0.5]), "%B %d")`. In each monitoring year, surveys have occurred continuously (e.g., sampling occurred daily) from `r format(min(trap_plot$date.std[trap_plot$Period=="Fall" & trap_plot$prop.sampled == 1.0]), "%B %d")` to `r format(max(trap_plot$date.std[trap_plot$Period=="Fall" & trap_plot$prop.sampled == 1.0]), "%B %d")`. Surveys have continued as late as `r format(max(trap_plot$date.std[trap_plot$Period =="Fall"]), "%B %d")` and no surveys have occurred later than `r format(max(trap_plot$date.std[trap_plot$Period=="Fall" & trap_plot$prop.sampled >= 0.5]), "%B %d")`.
 
@@ -78,18 +99,13 @@ options(knitr.kable.NA = '-')
   add_header_above(c(" " = 1, "Spring Sampling" = 3, "Fall Sampling" = 3))
 ```
 
-
-
-
 ```{r 2. Trap Effort - Spring Plot, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 15, fig.height = 5, fig.cap = "Figure 1. Spring juvenile trap operation effort, presented as the proportion of sample years when trapping was completed on each date.", fig.topcaption = TRUE}
 
 trap_effort_plot_spring
 
 ```
 
- <!-- **`r fig_nums("spring.trap.plot", "Spring trap operation period, presented as the proportion of sample years each date has been trapped since 2008 (excluding years when trapping did not occur due to COVID or government strikes).")`** -->
-
-
+<!-- **`r fig_nums("spring.trap.plot", "Spring trap operation period, presented as the proportion of sample years each date has been trapped since 2008 (excluding years when trapping did not occur due to COVID or government strikes).")`** -->
 
 ```{r 2. Trap Effort - Fall Plot, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 15, fig.height = 5, fig.cap = "Figure 2. Fall adult trapping effort, presented as the proportion of sample years when trapping was completed on each date.", fig.topcaption = TRUE}
 
@@ -99,7 +115,8 @@ trap_effort_plot_fall
 
 <!-- **`r fig_nums("fall.trap.plot", "Fall trap operation period, presented as the proportion of sample years each date has been trapped since 2008 (excluding years when trapping did not occur due to COVID or government strikes).")`** -->
 
-# Stream Conditions
+## 2.2 Stream Conditions
+
 ```{r 3. Stream Conditions - Load Data, echo=FALSE, warning=FALSE, message = FALSE}
 
 ## Load Stream Conditions Data 
@@ -107,23 +124,23 @@ source("SourceFiles/3. Stream Conditions.R")
 
 ```
 
+During each trap daily trap visit, volunteers record measures of water temperature, pH, Total Suspended Sediment (TSS), dissolved oxygen, and water level (stage). Mean annual measures of each parameter are presented below for Spring (Table 2 and Figure 3) and Fall monitoring periods (Table 2 and Figure 3).
 
-During each trap daily trap visit, volunteers record measures of water temperature, pH, Total Suspended Sediment (TSS), dissolved oxygen, and water level (stage). Information on stream conditions throughout trapping periods are presented below.
+```{r 3. Stream Conditions - Spring Table, fig.cap = "Table 2. Overall annual stream conditions during spring trap monitoring from 2008 to 2024.", fig.topcaption = TRUE,echo=FALSE, warning=FALSE, message = FALSE}
 
-```{r 3. Stream Conditions - Table, fig.cap = "Table 2. Overall annual stream conditions during spring and fall trap monitoring from 2008 to 2024.", fig.topcaption = TRUE,echo=FALSE, warning=FALSE, message = FALSE}
+cond_data_wide.spring <- cond_data_wide %>% select(1:13)
 
 ## Kable - Stream Conditions ----
 options(knitr.kable.NA = '-')
     
 
-    kable(cond_data_wide,
+    kable(cond_data_wide.spring,
       "html",
       booktabs = T,
       
       align = c("c"),
-      col.names = c(" ", "Mean","SD","Mean","SD","Mean","SD","Mean","SD","Mean","SD","Mean","SD",
-                         "Mean","SD","Mean","SD","Mean","SD","Mean","SD","Mean","SD","Mean","SD"),
-      caption = "Table 1. Annual spring and fall trap operation periods.",
+      col.names = c(" ", "Mean","SD","Mean","SD","Mean","SD","Mean","SD","Mean","SD","Mean","SD"),
+      caption = "Table 2. Stream conditions during spring trap operation.",
       
       digits = 1) %>%
   column_spec(c(2,5), width = "2cm") %>%
@@ -132,32 +149,59 @@ options(knitr.kable.NA = '-')
                 font_size = 12,
                 fixed_thead = TRUE) %>% 
   add_header_above(c(" " = 1, "Air Temp. \n(\u00B0C)" = 2, "Water Temp. \n(\u00B0C)" = 2, 
-                              "pH \n. " = 2, "DO \n(mg/L)" = 2, "TDS \n(ppm)" = 2, "Water Level \n(m)" = 2,
-                              "Air Temp. \n(\u00B0C)" = 2, "Water Temp. \n(\u00B0C)" = 2, 
                               "pH \n. " = 2, "DO \n(mg/L)" = 2, "TDS \n(ppm)" = 2, "Water Level \n(m)" = 2)) %>%
-  add_header_above(c("Year"= 1, "Spring Monitoring" = 12, "Fall Monitoring" = 12))    
+  add_header_above(c("Year"= 1, "Spring Monitoring" = 12))    
 
 
 
 ```
 
+```{r 3. Stream Conditions - Fall Table, fig.cap = "Table 3. Overall annual stream conditions during fall trap monitoring from 2008 to 2024.", fig.topcaption = TRUE,echo=FALSE, warning=FALSE, message = FALSE}
+
+cond_data_wide.fall <- cond_data_wide %>% select(1,14:25)
+
+## Kable - Stream Conditions ----
+options(knitr.kable.NA = '-')
+    
+
+    kable(cond_data_wide.fall,
+      "html",
+      booktabs = T,
+      
+      align = c("c"),
+      col.names = c(" ", "Mean","SD","Mean","SD","Mean","SD","Mean","SD","Mean","SD","Mean","SD"),
+      caption = "Table 3. Stream conditions during fall trap operation.",
+      
+      digits = 1) %>%
+  column_spec(c(2,5), width = "2cm") %>%
+  kable_styling("striped", full_width =  FALSE,
+                position = "center", 
+                font_size = 12,
+                fixed_thead = TRUE) %>% 
+  add_header_above(c(" " = 1, "Air Temp. \n(\u00B0C)" = 2, "Water Temp. \n(\u00B0C)" = 2, 
+                              "pH \n. " = 2, "DO \n(mg/L)" = 2, "TDS \n(ppm)" = 2, "Water Level \n(m)" = 2)) %>%
+  add_header_above(c("Year"= 1, "Fall Monitoring" = 12))    
 
 
+
+```
 
 ```{r 3. Stream Conditions - Plot, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 15, fig.cap = "Figure 3. Average daily measures of air and water temperature, pH, dissolved oxygen (DO), total dissolved solids (TDS) and water level (stage).", fig.topcaption = TRUE}
 
 cond_plot
 ```
 
+## 2.3. Annual Captures
 
-# Annual Captures
-### Spring Surveys
+### 2.3.1 Spring Surveys
+
 ```{r 4. Fish Captures - Summary Table catch_dat.prep, echo=FALSE, warning=FALSE, message = FALSE, include = FALSE}
 source("SourceFiles/4. Annual Captures.R")
 ```
 
+Since 2008, a total of `r format(sum(catch_annual.Table.Spring$nCT), big.mark =",")` juvenile Coastal Cutthroat Trout and `r format(sum(catch_annual.Table.Spring$nCO), big.mark =",")` juvenile Coho Salmon have been captured during spring trapping. Annual captures of CCT and CO have ranged from `r format(min(catch_annual.Table.Spring$nCT), big.mark =",")` to `r format(max(catch_annual.Table.Spring$nCT), big.mark =",")` (mean = `r format(mean(catch_annual.Table.Spring$nCT), digits = 1)`) and `r format(min(catch_annual.Table.Spring$nCO), big.mark =",")` to `r format(max(catch_annual.Table.Spring$nCO), big.mark =",")` (mean = `r format(mean(catch_annual.Table.Spring$nCO), digits = 1)`) (Table 4). Coho and Cutthroat were captured on the first day of trap operation in `r length(catch_annual.Table.Spring.calcs$CO_days.after.start[catch_annual.Table.Spring.calcs$CO_days.after.start==0])` and `r length(catch_annual.Table.Spring.calcs$CT_days.after.start[catch_annual.Table.Spring.calcs$CT_days.after.start==0])` years, respectively, suggesting that the trap was operating prior to the onset of the migration period in most years. At the end of the monitoring period, CO were captured on the last day of fence operation in `r length(catch_annual.Table.Spring.calcs$CO_days.before.end[catch_annual.Table.Spring.calcs$CO_days.before.end==0])` monitoring years (`r percent(length(catch_annual.Table.Spring.calcs$CO_days.before.end[catch_annual.Table.Spring.calcs$CO_days.before.end==0])/length(catch_annual.Table.Spring.calcs$Year))` of years), suggesting that the total number of out migrating Coho may be underestimated in more than half of all monitoring years. The fact that no CO were captured prior to the end of the monitoring period in some years suggests few fish were missed. In contrast, CT were captured on the last day of monitoring in only  `r length(catch_annual.Table.Spring.calcs$CT_days.before.end[catch_annual.Table.Spring.calcs$CT_days.before.end==0])` years.
 
-Since 2008, a total of `r format(sum(catch_annual.Table.Spring$nCT), big.mark =",")` juvenile Coastal Cutthroat Trout and `r format(sum(catch_annual.Table.Spring$nCO), big.mark =",")` juvenile Coho Salmon have been captured during spring trapping. Annual captures of CCT and CO have ranged from `r format(min(catch_annual.Table.Spring$nCT), big.mark =",")` to `r format(max(catch_annual.Table.Spring$nCT), big.mark =",")` and `r format(min(catch_annual.Table.Spring$nCO), big.mark =",")` to `r format(max(catch_annual.Table.Spring$nCO), big.mark =",")`, respectively, with overall means of `r format(mean(catch_annual.Table.Spring$nCT), digits = 1)` CCT and `r format(mean(catch_annual.Table.Spring$nCO), digits = 1)` CO.
+### ADD TEXT ABOUT DECLINING TRENDS IN NUMBER OF CO BEING CAPTURED.
 
 ```{r Spring.CatchSummaryTable, echo=FALSE, warning=FALSE, message = FALSE}
 ## Kable - Master Summary ----
@@ -172,7 +216,7 @@ kable(catch_annual.Table.Spring,
       col.names = c("Year", "Start", "End", "# Days Sampled",  
                     "Med.","Min","Max", "n", "Mean", "SD" ,"Min","Max",
                     "Med.","Min","Max", "n", "Mean", "SD" ,"Min","Max"),
-      caption = "**Table 2. Spring capture summary - capture timing, total captures and length of Coastal Cutthroat Trout and Coho Salmon.**",
+      caption = "**Table 4. Spring capture summary - capture timing, total captures and length of Coastal Cutthroat Trout and Coho Salmon.**",
       digits = 1) %>%
   #column_spec(c(1, 3,10,17), bold = TRUE) %>%
   kable_styling("striped", full_width =  FALSE,
@@ -186,8 +230,6 @@ kable(catch_annual.Table.Spring,
   add_header_above(c(" " = 4, "Coastal Cutthroat Trout" = 8, "Coho Salmon" = 8)) 
 ```
 
-
-
 ```{r 4. Fish Captures - Annual Spring Catch Plot - Spring, echo=FALSE, warning=FALSE, message = FALSE}
 
 catch_annual_barPlot.Spring
@@ -195,6 +237,7 @@ catch_annual_barPlot.Spring
 ```
 
 **`r fig_nums("total_springcatches", "Total number of Coastal Cutthroat Trout (CT) and Coho Salmon (CO) captured during spring trap operations from 2008 to 2024.")`**
+
 
 ```{r springCatch_prep ,echo=FALSE, warning=FALSE, message = FALSE}
     ## CCT  Data
@@ -259,7 +302,15 @@ catch_annual_barPlot.Spring
 source("SourceFiles/5. Capture Timing.R")
 ```
 
-There is considerable interannual variability in the timing of downstream migrations. For Coastal cutthroat trout, the date that 50% of total out migrants passed the fence ranged from `r format(min(pass.date$minPass.std[pass.date$Species=="CCT"]), "%b-%d")` to `r format(max(pass.date$minPass.std[pass.date$Species=="CCT"]), "%b-%d")`(mean = `r format(mean(pass.date$mean.min[pass.date$Species=="CCT"]), "%b-%d")`). In contrast, the date that 50% of total out migrating Coho Salmon passed the fence ranged from `r format(min(pass.date$minPass.std[pass.date$Species=="CO"]), "%b-%d")` to `r format(max(pass.date$minPass.std[pass.date$Species=="CO"]), "%b-%d")`(mean = `r format(mean(pass.date$mean.min[pass.date$Species=="CO"]), "%b-%d")`)
+There is considerable interannual variability in the timing of downstream migrations. For Coastal cutthroat trout, the date that 50% of total out migrants passed the fence ranged from `r format(pass.period.spring$minPass.min[pass.period.spring$Species=="CT"], "%B %d")` to `r format(pass.period.spring$maxPass.max[pass.period.spring$Species=="CT"], "%B %d")`. In contrast, the date that 50% of total out migrating Coho Salmon passed the fence ranged from `r format(pass.period.spring$minPass.min[pass.period.spring$Species=="CO"], "%B %d")` to `r format(pass.period.spring$maxPass.max[pass.period.spring$Species=="CT"], "%B %d")` monitoring years. Suggesting that CO migration may have continued beyond the last day of monitoring in `r percent(length(catch_annual.Table.Spring.calcs$CO_days.before.end[catch_annual.Table.Spring.calcs$CO_days.before.end==0])/length(catch_annual.Table.Spring.calcs$CT_days.before.end))` of monitoring years (i.e., total CO counts may be underestimated during these years).
+
+##--------------------------
+
+```{r exit}
+knitr::knit_exit()
+```
+
+##--------------------------
 
 ```{r CCT - cum.Catch.plot,echo=FALSE, warning=FALSE, message = FALSE, fig.width = 9, fig.height = 15}
 
@@ -303,14 +354,6 @@ ggplot(Spring.Catch) +
 
 
 ```
-
-##--------------------------
-
-```{r exit}
-knitr::knit_exit()
-```
-
-##--------------------------
 
 ```{r CT Catch Summary, echo=FALSE, warning=FALSE, message = FALSE}
 ### Prep Data ----

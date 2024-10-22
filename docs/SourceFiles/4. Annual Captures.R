@@ -37,7 +37,8 @@ catch_annual_table <- catch_annual_all_species %>%
                                    n_Spring, Date_min_Spring, Date_med_Spring, 
                                    Date_max_Spring, FL_mean_Spring, FL_SD_Spring,
                                    n_Fall, Date_min_Fall, Date_med_Fall, 
-                                   Date_max_Fall, FL_mean_Fall, FL_SD_Fall)
+                                   Date_max_Fall, FL_mean_Fall, FL_SD_Fall) 
+    
 
         
 # Seasonal Catches ----
@@ -105,6 +106,27 @@ catch_annual.Table.all.seasons <- left_join(trap_effort2, catch_CT,
 catch_annual.Table.Spring <- catch_annual.Table.all.seasons %>% 
                               filter(Period == "Spring") %>%
                               select(!Period)
+     
+     colnames(catch_annual.Table.Spring)
+     str(catch_annual.Table.Spring)
+     catch_annual.Table.Spring.calcs  <- catch_annual.Table.Spring %>%
+                                              summarise(CT_days.after.start = as.numeric(as.Date(Date_minCT, format = "%b-%d") - as.Date(start, format = "%b-%d")),
+                                                     CT_days.before.end  = as.numeric(as.Date(Date_maxCT, format = "%b-%d") - as.Date(end, format = "%b-%d")),
+                                                     CO_days.after.start = as.numeric(as.Date(Date_minCO, format = "%b-%d") - as.Date(start, format = "%b-%d")),
+                                                     CO_days.before.end  = as.numeric(as.Date(Date_maxCO, format = "%b-%d") - as.Date(end, format = "%b-%d"))) %>%
+                                               mutate(Year = as.character(Year)) %>%
+                                               # adorn_totals("row") %>%
+                                               bind_rows(summarize(.,Year = "Overal Avg",
+                                                                     CT_days.after.start = mean(CT_days.after.start, na.rm = T),
+                                                                     CT_days.before.end= mean(CT_days.before.end, na.rm = T),
+                                                                     CO_days.after.start= mean(CO_days.after.start, na.rm = T),
+                                                                     CO_days.before.end= mean(CO_days.before.end, na.rm = T))) %>%
+                                               bind_rows(summarize(.,Year = "St. Dev.",
+                                                                   CT_days.after.start = sd(CT_days.after.start),
+                                                                   CT_days.before.end= sd(CT_days.before.end),
+                                                                   CO_days.after.start= sd(CO_days.after.start),
+                                                                   CO_days.before.end= sd(CO_days.before.end)))
+     length(catch_annual.Table.Spring.calcs$CT_days.before.end[catch_annual.Table.Spring.calcs$CT_days.before.end==0])
 
 ## * * Fall Catch Table ----
 catch_annual.Table.Fall <- catch_annual.Table.all.seasons %>% 
