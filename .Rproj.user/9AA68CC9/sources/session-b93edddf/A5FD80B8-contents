@@ -35,7 +35,7 @@ Throughout this analysis, I will aim to answer the following questions:
 
 1.  What species are utilizing Simms Creek?
 
-2.  Is current fence operation program capturing the complete migration period? 
+2.  Is current fence operation program capturing the complete migration period?
 
 3.  For each species, when are key behaviours occuring (e.g., when is peak smolt? when do adults arrive?).
 
@@ -107,7 +107,7 @@ trap_effort_plot_spring
 
 <!-- **`r fig_nums("spring.trap.plot", "Spring trap operation period, presented as the proportion of sample years each date has been trapped since 2008 (excluding years when trapping did not occur due to COVID or government strikes).")`** -->
 
-```{r 2. Trap Effort - Fall Plot, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 15, fig.height = 5, fig.cap = "Figure 2. Fall adult trapping effort, presented as the proportion of sample years when trapping was completed on each date.", fig.topcaption = TRUE}
+```{r 2. Trap Effort - Fall Plot, fig.cap = "Figure 2. Fall adult trapping effort, presented as the proportion of sample years when trapping was completed on each date.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 15, fig.height = 5}
 
 trap_effort_plot_fall
 
@@ -191,19 +191,22 @@ options(knitr.kable.NA = '-')
 cond_plot
 ```
 
-## 2.3. Annual Captures
+## 2.3. Spring Surveys
 
-### 2.3.1 Spring Surveys
+### 2.3.1 Annual Captures
 
 ```{r 4. Fish Captures - Summary Table catch_dat.prep, echo=FALSE, warning=FALSE, message = FALSE, include = FALSE}
 source("SourceFiles/4. Annual Captures.R")
 ```
 
-Since 2008, a total of `r format(sum(catch_annual.Table.Spring$nCT), big.mark =",")` juvenile Coastal Cutthroat Trout and `r format(sum(catch_annual.Table.Spring$nCO), big.mark =",")` juvenile Coho Salmon have been captured during spring trapping. Annual captures of CCT and CO have ranged from `r format(min(catch_annual.Table.Spring$nCT), big.mark =",")` to `r format(max(catch_annual.Table.Spring$nCT), big.mark =",")` (mean = `r format(mean(catch_annual.Table.Spring$nCT), digits = 1)`) and `r format(min(catch_annual.Table.Spring$nCO), big.mark =",")` to `r format(max(catch_annual.Table.Spring$nCO), big.mark =",")` (mean = `r format(mean(catch_annual.Table.Spring$nCO), digits = 1)`) (Table 4). Coho and Cutthroat were captured on the first day of trap operation in `r length(catch_annual.Table.Spring.calcs$CO_days.after.start[catch_annual.Table.Spring.calcs$CO_days.after.start==0])` and `r length(catch_annual.Table.Spring.calcs$CT_days.after.start[catch_annual.Table.Spring.calcs$CT_days.after.start==0])` years, respectively, suggesting that the trap was operating prior to the onset of the migration period in most years. At the end of the monitoring period, CO were captured on the last day of fence operation in `r length(catch_annual.Table.Spring.calcs$CO_days.before.end[catch_annual.Table.Spring.calcs$CO_days.before.end==0])` monitoring years (`r percent(length(catch_annual.Table.Spring.calcs$CO_days.before.end[catch_annual.Table.Spring.calcs$CO_days.before.end==0])/length(catch_annual.Table.Spring.calcs$Year))` of years), suggesting that the total number of out migrating Coho may be underestimated in more than half of all monitoring years. The fact that no CO were captured prior to the end of the monitoring period in some years suggests few fish were missed. In contrast, CT were captured on the last day of monitoring in only  `r length(catch_annual.Table.Spring.calcs$CT_days.before.end[catch_annual.Table.Spring.calcs$CT_days.before.end==0])` years.
+Since 2008, a total of `r format(sum(catch_annual.Table.Spring$nCT), big.mark =",")` juvenile Coastal Cutthroat Trout and `r format(sum(catch_annual.Table.Spring$nCO), big.mark =",")` juvenile Coho Salmon have been captured during spring trapping. Annual captures of CCT have ranged from `r format(min(catch_annual.Table.Spring$nCT), big.mark =",")` to `r format(max(catch_annual.Table.Spring$nCT), big.mark =",")` (mean = `r format(mean(catch_annual.Table.Spring$nCT), digits = 1)`) while CO captures have varied from `r format(min(catch_annual.Table.Spring$nCO), big.mark =",")` to `r format(max(catch_annual.Table.Spring$nCO), big.mark =",")` with an overall mean of `r format(mean(catch_annual.Table.Spring$nCO), digits = 1)`) fish (Figure 4 and Table 4).
 
-### ADD TEXT ABOUT DECLINING TRENDS IN NUMBER OF CO BEING CAPTURED.
+```{r 4. Annual Captures - Summary Plot, fig.cap = "Figure 4. Total annual catch of Coastal Cutthroat Trout and Coho Salmon during Spring fence monitoring.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 12}
 
-```{r Spring.CatchSummaryTable, echo=FALSE, warning=FALSE, message = FALSE}
+catch_annual_barPlot.Spring
+```
+
+```{r Annual Captures - SummaryTable, echo=FALSE, warning=FALSE, message = FALSE}
 ## Kable - Master Summary ----
 options(knitr.kable.NA = '-')
 
@@ -230,79 +233,50 @@ kable(catch_annual.Table.Spring,
   add_header_above(c(" " = 4, "Coastal Cutthroat Trout" = 8, "Coho Salmon" = 8)) 
 ```
 
-```{r 4. Fish Captures - Annual Spring Catch Plot - Spring, echo=FALSE, warning=FALSE, message = FALSE}
+### 2.3.2. Migration Timing
 
-catch_annual_barPlot.Spring
-
-```
-
-**`r fig_nums("total_springcatches", "Total number of Coastal Cutthroat Trout (CT) and Coho Salmon (CO) captured during spring trap operations from 2008 to 2024.")`**
-
-
-```{r springCatch_prep ,echo=FALSE, warning=FALSE, message = FALSE}
-    ## CCT  Data
-    CCT_catch.prep <- data_all %>% 
-                 filter(Species == "CT", Period == "Spring")
-    
-    CCT_catch <- left_join(date_seq, CCT_catch.prep, by = c("Date", "Month")) %>%
-                    mutate(Year = strftime(Date, format = "%Y"),
-                           Species = "CT",
-                           Period = "Spring",
-                           Catch = ifelse(Length >0,1,0),) %>%
-                     group_by(Date) %>%
-                     summarize(catch = sum(Catch)) %>%
-                     mutate(catch = coalesce(catch,0),
-                            Year = strftime(Date, format = "%Y")) %>%
-                     ungroup() %>%
-                     group_by(Year) %>%
-                     mutate(cum_catch   = cumsum(catch),
-                            total_catch = max(cum_catch),
-                            prop        = cum_catch/total_catch,
-                            prop.scaled = prop*300,
-                            date.std    = case_when(year(Date) >= 0 ~ 'year<-'(Date, 2024)),
-                            week.std    = week(date.std)) %>%
-                      filter(date.std >= as.Date("2024-04-15"),
-                             date.std <= as.Date("2024-06-15")) %>%
-                      mutate(Decade = floor_decade(as.numeric(Year)),
-                             Species = "CCT") %>%
-                     select(Species, everything())
-    ## CO Catch
-    CO_catch.prep <- data_all %>% 
-                 filter(Species == "CO", Period == "Spring")
-    
-    CO_catch <- left_join(date_seq, CO_catch.prep, by = c("Date", "Month")) %>%
-                    mutate(Year = strftime(Date, format = "%Y"),
-                           Species = "CO",
-                           Period = "Spring",
-                           Catch = ifelse(Length >0,1,0),) %>%
-                     group_by(Date) %>%
-                     summarize(catch = sum(Catch)) %>%
-                     mutate(catch = coalesce(catch,0),
-                            Year = strftime(Date, format = "%Y")) %>%
-                     ungroup() %>%
-                     group_by(Year) %>%
-                     mutate(cum_catch   = cumsum(catch),
-                            total_catch = max(cum_catch),
-                            prop        = cum_catch/total_catch,
-                            prop.scaled = prop*300,
-                            date.std    = case_when(year(Date) >= 0 ~ 'year<-'(Date, 2024)),
-                            week.std    = week(date.std)) %>%
-                      filter(date.std >= as.Date("2024-04-15"),
-                             date.std <= as.Date("2024-06-15")) %>%
-                      mutate(Decade = floor_decade(as.numeric(Year)),
-                             Species = "CO") %>%
-                      select(Species, everything())
-    
-    Spring.Catch <- rbind(CCT_catch,CO_catch)
-    
-    
-```
-
-```{r passagedate, warning=FALSE, message = FALSE, echo=FALSE}
+```{r 5. Capture Timing - Load Data, echo=FALSE, warning=FALSE, message = FALSE, include = FALSE}
 source("SourceFiles/5. Capture Timing.R")
 ```
 
-There is considerable interannual variability in the timing of downstream migrations. For Coastal cutthroat trout, the date that 50% of total out migrants passed the fence ranged from `r format(pass.period.spring$minPass.min[pass.period.spring$Species=="CT"], "%B %d")` to `r format(pass.period.spring$maxPass.max[pass.period.spring$Species=="CT"], "%B %d")`. In contrast, the date that 50% of total out migrating Coho Salmon passed the fence ranged from `r format(pass.period.spring$minPass.min[pass.period.spring$Species=="CO"], "%B %d")` to `r format(pass.period.spring$maxPass.max[pass.period.spring$Species=="CT"], "%B %d")` monitoring years. Suggesting that CO migration may have continued beyond the last day of monitoring in `r percent(length(catch_annual.Table.Spring.calcs$CO_days.before.end[catch_annual.Table.Spring.calcs$CO_days.before.end==0])/length(catch_annual.Table.Spring.calcs$CT_days.before.end))` of monitoring years (i.e., total CO counts may be underestimated during these years).
+Out migrating juvenile coastal cutthroat trout were first encountered as early as `r format(min(pass.period.spring$minPass.min[pass.period.spring$Species=="CT"]), "%B %d")` and as late as `r format(max(pass.period.spring$minPass.min[pass.period.spring$Species=="CT"]), "%B %d")` (mean	$\pm$ SD = `r format(mean(pass.period.spring$minPass.min[pass.period.spring$Species=="CT"], na.rm = TRUE), "%B %d")` $\pm$ `r round(sd(pass.period.spring$minMeanDiff[pass.period.spring$Species=="CT"], na.rm = TRUE), 1)` days). The date of peak migration occurred later, from `r format(min(catch_peak.spring$date.std[catch_peak.spring$Species=="CT"]), "%B %d")` to `r format(max(catch_peak.spring$date.std[catch_peak.spring$Species=="CT"]), "%B %d")`, with an overall mean peak migration date of `r format(mean(catch_peak.spring$date.std[catch_peak.spring$Species=="CT"],na.rm = TRUE), "%B %d")` 	$\pm$ `r round(sd(catch_peak.spring$MeanDiff[catch_peak.spring$Species=="CT"],na.rm = TRUE),1)` days  (Figure 5). On average, half of all migrants had moved past the fence by `r format(mean(catch50prop.spring$meanDate50p[catch50prop.spring$Species=="CT"], na.rm = TRUE), "%B %d")` $\pm$ `r round(sd(catch50prop.spring$Date50pDiff[catch50prop.spring$Species=="CT"], na.rm = TRUE), 1)` days, though this ranged from `r format(min(catch50prop.spring$date.50p[catch50prop.spring$Species=="CT"], na.rm = TRUE), "%B %d")` to `r format(max(catch50prop.spring$date.50p[catch50prop.spring$Species=="CT"], na.rm = TRUE), "%B %d")`.
+
+Out migrating juvenile coastal cutthroat trout were first encountered as early as `r format(min(pass.period.spring$minPass.min[pass.period.spring$Species=="CO"]), "%B %d")` and as late as `r format(max(pass.period.spring$minPass.min[pass.period.spring$Species=="CO"]), "%B %d")` (mean	$\pm$ SD = `r format(mean(pass.period.spring$minPass.min[pass.period.spring$Species=="CO"], na.rm = TRUE), "%B %d")` $\pm$ `r round(sd(pass.period.spring$minMeanDiff[pass.period.spring$Species=="CO"], na.rm = TRUE), 1)` days). The date of peak migration occurred later, from `r format(min(catch_peak.spring$date.std[catch_peak.spring$Species=="CO"]), "%B %d")` to `r format(max(catch_peak.spring$date.std[catch_peak.spring$Species=="CO"]), "%B %d")`, with an overall mean peak migration date of `r format(mean(catch_peak.spring$date.std[catch_peak.spring$Species=="CO"],na.rm = TRUE), "%B %d")` 	$\pm$ `r round(sd(catch_peak.spring$MeanDiff[catch_peak.spring$Species=="CO"],na.rm = TRUE),1)` days  (Figure 5).On average, half of all migrants had moved past the fence by `r format(mean(catch50prop.spring$meanDate50p[catch50prop.spring$Species=="CO"], na.rm = TRUE), "%B %d")` $\pm$ `r round(sd(catch50prop.spring$Date50pDiff[catch50prop.spring$Species=="CO"], na.rm = TRUE), 1)` days, though this ranged from `r format(min(catch50prop.spring$date.50p[catch50prop.spring$Species=="CO"], na.rm = TRUE), "%B %d")` to `r format(max(catch50prop.spring$date.50p[catch50prop.spring$Species=="CO"], na.rm = TRUE), "%B %d")`.
+
+
+```{r 5. Capture Timing - Peak Capture Histogram, fig.cap = "Figure 5. Histogram showing frequency of peak capture dates during Spring fence monitoring.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 12}
+
+Catch_Peak_Plot.Spring
+```
+
+# ```{r 5. Capture Timing - 50% Pass Histogram, fig.cap = "Figure 6. Histogram showing frequency of dates when 50% of migration had passed Spring fence monitoring.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 12}
+# 
+# DateHalfPassed.plot.spring
+# 
+# ```
+
+
+
+### GARBAGE TEXT---
+
+<!-- while Coho Salmon were first encountered on  `r format(pass.period.spring$minPass.min[pass.period.spring$Species=="CO"], "%B %d")`. -->
+
+<!-- colnames(pass.period.spring) -->
+
+<!-- to `r format(pass.period.spring$maxPass.max[pass.period.spring$Species=="CT"], "%B %d")`. In contrast, the date that 50% of total out migrating Coho Salmon passed the fence ranged from `r format(pass.period.spring$minPass.min[pass.period.spring$Species=="CO"], "%B %d")` to `r format(pass.period.spring$maxPass.max[pass.period.spring$Species=="CT"], "%B %d")` monitoring years. Suggesting that CO migration may have continued beyond the last day of monitoring in `r percent(length(catch_annual.Table.Spring.calcs$CO_days.before.end[catch_annual.Table.Spring.calcs$CO_days.before.end==0])/length(catch_annual.Table.Spring.calcs$CT_days.before.end))` of monitoring years (i.e., total CO counts may be underestimated during these years). -->
+
+### GARBAGE TEXT----
+
+Coho and Cutthroat were captured on the first day of trap operation in `r length(catch_annual.Table.Spring.calcs$CO_days.after.start[catch_annual.Table.Spring.calcs$CO_days.after.start==0])` and `r length(catch_annual.Table.Spring.calcs$CT_days.after.start[catch_annual.Table.Spring.calcs$CT_days.after.start==0])` years, respectively, suggesting that the trap was operating prior to the onset of the migration period in most years. At the end of the monitoring period, CO were captured on the last day of fence operation in `r length(catch_annual.Table.Spring.calcs$CO_days.before.end[catch_annual.Table.Spring.calcs$CO_days.before.end==0])` monitoring years (`r percent(length(catch_annual.Table.Spring.calcs$CO_days.before.end[catch_annual.Table.Spring.calcs$CO_days.before.end==0])/length(catch_annual.Table.Spring.calcs$Year))` of years). This suggests the total number of out migrating CO may be underestimated in more than half of all monitoring years. However, capture trends suggest that missed fish account for a limited proportion of total annual migrants (Figure 3). In contrast, CT were captured on the last day of monitoring in only `r length(catch_annual.Table.Spring.calcs$CT_days.before.end[catch_annual.Table.Spring.calcs$CT_days.before.end==0])` years (Figure 4).
+
+```{r Spring Capture Timing Plot - CO, fig.cap = "Figure 3. Total daily catch of Coho Salmon.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 15}
+daily_catch_summary_plot.Spring.CO
+```
+
+```{r Spring Capture Timing Plot - CT, fig.cap = "Figure 4. Total daily catch of Coastal Cutthroat Trout.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 15}
+
+daily_catch_summary_plot.Spring.CT
+```
 
 ##--------------------------
 
