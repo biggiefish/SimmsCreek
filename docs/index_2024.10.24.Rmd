@@ -1,0 +1,668 @@
+---
+title: "SimmsFishFence"
+author: "Eric V"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    fig_caption: yes
+    code_folding: show
+    toc: yes
+    toc_float: yes
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: scroll
+  html_notebook:
+    toc: yes
+  word_document:
+    toc: yes
+editor_options:
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+# 1. Introduction
+
+Simms Creek is a small, 3rd order stream that drains an area of \~1,800 ha into the Salish Sea, near Campbell River's Willow Point neighborhood. The lower reach of Simms Creek (\~3 km of channel, east of Jubilee Road), is contained within a narrow urban green way that is bordered by residential properties. From Jubilee Road to the Inland Highway the stream is protected within [Beaver Lodge Lands](https://campbellriver.travel/news/forestry-guide-to-beaver-lodge-lands/), upstream of the Inland Highway, \>1.5 km of tributary channel is located within private forest lands.
+
+Historic fish observations indicate that Chum, Chinook, Pink and Coho Salmon have all been observed in the stream, as well as Coastal Cutthroat Trout, Rainbow Trout and Steelhead. More recent monitoring (aka this dataset), suggest that Coho Salmon and Coastal Cutthroat Trout are the primary species within Simms Creek, both of which utilize the stream year round - though a small number of juvenile Chinook Salmon were identified in 2024.
+
+[Greenways Land Trust](https://www.greenwaystrust.ca/) has supported Simms Creek Stewards for +20 years, including operation of a fish fence near the mouth of the stream since 2008. Juvenile and adult fish moving past the fence are tallied each spring and fall, respectively. The objective of this project is to explore the juvenile fence dataset. All work is being done strictly for fun and out of personal curiosity. Any feedback, input, or support is welcome. Also, I have a soft spot for Coastal Cutthroat Trout (CCT), so be warned that effort may be slightly trout biased.
+
+Throughout this analysis, I will aim to answer the following questions:
+
+1.  What species are utilizing Simms Creek?
+
+2.  Is current fence operation program capturing the complete migration period?
+
+3.  For each species, when are key behaviours occuring (e.g., when is peak smolt? when do adults arrive?).
+
+4.  How large are fish encountered during smolt and upstream migration periods? What age classes are migrating (I don't have scale data, but we can make an educated guess).
+
+5.  What is the freshwater survival of Coho Salmon? Note that we cannot estimate marine survival without some information on individual fish (i.e., coded wire tag data to verify that returning adults originated in Simms Creek and when they smolted).
+
+6.  What proportion of returning Coho Salmon are hatchery origin? Have any hatchery origin trout been encountered (not actually sure if there aer many hatchery reared trout at the moment, and if so, if they are marked).
+
+7.  What factors may be contributing to observed trends in abundance?
+
+But before we can do that, lets take a look at what has been completed to date. It's a tremendous amount of work and all volunteers and supporters should be commended!
+
+```{r 1. Load and Format Data, echo = FALSE, warning = FALSE, message = FALSE}
+## Clear workspace ##
+rm(list = ls())  
+
+# ## Load Prepped Data
+# source("SourceFiles/1. Load and Prep Data.R")
+
+## Load Trap Effort Data
+source("SourceFiles/2. Trapping Effort.R")
+
+```
+
+# 2. Fence Monitoring
+
+The Simms Creek fish fence has operated annually since 2008, with the exception of 2020 and 2021 when operations were paused due to the COVID-19 Pandemic and in the spring of 2023 when federal employees were on strike.
+
+## 2.1 Fence Monitoring Effort
+
+### 2.1.1 Spring Monitoring
+
+Spring surveys target out migrating juvenile Coho Salmon but also capture an impressive number of Coastal Cutthroat Trout and have even captured some Chinook Salmon. Spring fence monitoring has started as early as `r format(min(trap_plot$date.std[trap_plot$Period=="Spring"]), "%B %d")`, however, most surveys (50%) don't start until `r format(min(trap_plot$date.std[trap_plot$Period=="Spring" & trap_plot$prop.sampled >= 0.5]), "%B %d")`. In each monitoring year, the fence has operated continuously (e.g., sampling occurred at least daily) from `r format(min(trap_plot$date.std[trap_plot$Period=="Spring" & trap_plot$prop.sampled == 1.0]), "%B %d")` to `r format(max(trap_plot$date.std[trap_plot$Period=="Spring" & trap_plot$prop.sampled == 1.0]), "%B %d")`. Surveys have continued as late as `r format(max(trap_plot$date.std[trap_plot$Period=="Spring"]), "%B %d")`, but most (50%) are terminated by `r format(max(trap_plot$date.std[trap_plot$Period=="Spring" & trap_plot$prop.sampled==0.5]), "%B %d")`.
+
+### 2.1.2 Fall Monitoring
+
+Fall surveys to count the number returning adult Coho, Chinook, Chum and Pink Salmon and also intercept a small number of Cutthroat Trout. In the fall, surveys have started as early as `r format(min(trap_plot$date.std[trap_plot$Period=="Fall"]), "%B %d")`, however, most surveys (50%) have started on `r format(min(trap_plot$date.std[trap_plot$Period=="Fall" & trap_plot$prop.sampled >= 0.5]), "%B %d")`. In each monitoring year, surveys have occurred continuously (e.g., sampling occurred daily) from `r format(min(trap_plot$date.std[trap_plot$Period=="Fall" & trap_plot$prop.sampled == 1.0]), "%B %d")` to `r format(max(trap_plot$date.std[trap_plot$Period=="Fall" & trap_plot$prop.sampled == 1.0]), "%B %d")`. Surveys have continued as late as `r format(max(trap_plot$date.std[trap_plot$Period =="Fall"]), "%B %d")` and no surveys have occurred later than `r format(max(trap_plot$date.std[trap_plot$Period=="Fall" & trap_plot$prop.sampled >= 0.5]), "%B %d")`.
+
+```{r 2. Trap Effort Table trap effort table, fig.cap = "Table 1. Annual spring and fall trap operation periods.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE}
+
+## Kable - Master Summary ----
+options(knitr.kable.NA = '-')
+    
+
+    kable(trap_effort_table,
+      "html",
+      booktabs = T,
+      
+      align = c("c"),
+      col.names = c("Year", "# Days Sampled", "Start", "End", 
+                            "# Days Sampled", "Start", "End"),
+      caption = "Table 1. Annual spring and fall trap operation periods.",
+      
+      digits = 1) %>%
+  column_spec(c(2,5), width = "2cm") %>%
+  kable_styling("striped", full_width =  FALSE,
+                position = "center", 
+                font_size = 12,
+                fixed_thead = TRUE) %>%
+  add_header_above(c(" " = 1, "Spring Sampling" = 3, "Fall Sampling" = 3))
+```
+
+```{r 2. Trap Effort - Spring Plot, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 15, fig.height = 5, fig.cap = "Figure 1. Spring juvenile trap operation effort, presented as the proportion of sample years when trapping was completed on each date.", fig.topcaption = TRUE}
+
+trap_effort_plot_spring
+
+```
+
+<!-- **`r fig_nums("spring.trap.plot", "Spring trap operation period, presented as the proportion of sample years each date has been trapped since 2008 (excluding years when trapping did not occur due to COVID or government strikes).")`** -->
+
+```{r 2. Trap Effort - Fall Plot, fig.cap = "Figure 2. Fall adult trapping effort, presented as the proportion of sample years when trapping was completed on each date.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 15, fig.height = 5}
+
+trap_effort_plot_fall
+
+```
+
+<!-- **`r fig_nums("fall.trap.plot", "Fall trap operation period, presented as the proportion of sample years each date has been trapped since 2008 (excluding years when trapping did not occur due to COVID or government strikes).")`** -->
+
+## 2.2 Stream Conditions
+
+```{r 3. Stream Conditions - Load Data, echo=FALSE, warning=FALSE, message = FALSE}
+
+## Load Stream Conditions Data 
+source("SourceFiles/3. Stream Conditions.R")
+
+```
+
+During each trap daily trap visit, volunteers record measures of water temperature, pH, Total Suspended Sediment (TSS), dissolved oxygen, and water level (stage). Mean annual measures of each parameter are presented below for Spring (Table 2 and Figure 3) and Fall monitoring periods (Table 2 and Figure 3).
+
+```{r 3. Stream Conditions - Spring Table, fig.cap = "Table 2. Overall annual stream conditions during spring trap monitoring from 2008 to 2024.", fig.topcaption = TRUE,echo=FALSE, warning=FALSE, message = FALSE}
+
+cond_data_wide.spring <- cond_data_wide %>% select(1:13)
+
+## Kable - Stream Conditions ----
+options(knitr.kable.NA = '-')
+    
+
+    kable(cond_data_wide.spring,
+      "html",
+      booktabs = T,
+      
+      align = c("c"),
+      col.names = c(" ", "Mean","SD","Mean","SD","Mean","SD","Mean","SD","Mean","SD","Mean","SD"),
+      caption = "Table 2. Stream conditions during spring trap operation.",
+      
+      digits = 1) %>%
+  column_spec(c(2,5), width = "2cm") %>%
+  kable_styling("striped", full_width =  FALSE,
+                position = "center", 
+                font_size = 12,
+                fixed_thead = TRUE) %>% 
+  add_header_above(c(" " = 1, "Air Temp. \n(\u00B0C)" = 2, "Water Temp. \n(\u00B0C)" = 2, 
+                              "pH \n. " = 2, "DO \n(mg/L)" = 2, "TDS \n(ppm)" = 2, "Water Level \n(m)" = 2)) %>%
+  add_header_above(c("Year"= 1, "Spring Monitoring" = 12))    
+
+
+
+```
+
+```{r 3. Stream Conditions - Fall Table, fig.cap = "Table 3. Overall annual stream conditions during fall trap monitoring from 2008 to 2024.", fig.topcaption = TRUE,echo=FALSE, warning=FALSE, message = FALSE}
+
+cond_data_wide.fall <- cond_data_wide %>% select(1,14:25)
+
+## Kable - Stream Conditions ----
+options(knitr.kable.NA = '-')
+    
+
+    kable(cond_data_wide.fall,
+      "html",
+      booktabs = T,
+      
+      align = c("c"),
+      col.names = c(" ", "Mean","SD","Mean","SD","Mean","SD","Mean","SD","Mean","SD","Mean","SD"),
+      caption = "Table 3. Stream conditions during fall trap operation.",
+      
+      digits = 1) %>%
+  column_spec(c(2,5), width = "2cm") %>%
+  kable_styling("striped", full_width =  FALSE,
+                position = "center", 
+                font_size = 12,
+                fixed_thead = TRUE) %>% 
+  add_header_above(c(" " = 1, "Air Temp. \n(\u00B0C)" = 2, "Water Temp. \n(\u00B0C)" = 2, 
+                              "pH \n. " = 2, "DO \n(mg/L)" = 2, "TDS \n(ppm)" = 2, "Water Level \n(m)" = 2)) %>%
+  add_header_above(c("Year"= 1, "Fall Monitoring" = 12))    
+
+
+
+```
+
+```{r 3. Stream Conditions - Plot, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 15, fig.cap = "Figure 3. Average daily measures of air and water temperature, pH, dissolved oxygen (DO), total dissolved solids (TDS) and water level (stage).", fig.topcaption = TRUE}
+
+cond_plot
+```
+
+## 2.3. Spring Surveys
+
+### 2.3.1 Annual Captures
+
+```{r 4. Fish Captures - Summary Table catch_dat.prep, echo=FALSE, warning=FALSE, message = FALSE, include = FALSE}
+source("SourceFiles/4. Annual Captures.R")
+```
+
+Since 2008, a total of `r format(sum(catch_annual.Table.Spring$nCT), big.mark =",")` juvenile Coastal Cutthroat Trout and `r format(sum(catch_annual.Table.Spring$nCO), big.mark =",")` juvenile Coho Salmon have been captured during spring trapping. Annual captures of CCT have ranged from `r format(min(catch_annual.Table.Spring$nCT), big.mark =",")` to `r format(max(catch_annual.Table.Spring$nCT), big.mark =",")` (mean = `r format(mean(catch_annual.Table.Spring$nCT), digits = 1)`) while CO captures have varied from `r format(min(catch_annual.Table.Spring$nCO), big.mark =",")` to `r format(max(catch_annual.Table.Spring$nCO), big.mark =",")` with an overall mean of `r format(mean(catch_annual.Table.Spring$nCO), digits = 1)`) fish (Figure 4 and Table 4).
+
+```{r 4. Annual Captures - Summary Plot, fig.cap = "Figure 4. Total annual catch of Coastal Cutthroat Trout and Coho Salmon during Spring fence monitoring.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 12}
+
+catch_annual_barPlot.Spring
+```
+
+```{r Annual Captures - SummaryTable, echo=FALSE, warning=FALSE, message = FALSE}
+## Kable - Master Summary ----
+options(knitr.kable.NA = '-')
+
+kable(catch_annual.Table.Spring,
+      "html",
+      booktabs = T,
+      
+      align = c("c"),
+      # col.names = c("Year", "Period", "Start", "End", "# Days Sampled", 
+      col.names = c("Year", "Start", "End", "# Days Sampled",  
+                    "Med.","Min","Max", "n", "Mean", "SD" ,"Min","Max",
+                    "Med.","Min","Max", "n", "Mean", "SD" ,"Min","Max"),
+      caption = "**Table 4. Spring capture summary - capture timing, total captures and length of Coastal Cutthroat Trout and Coho Salmon.**",
+      digits = 1) %>%
+  #column_spec(c(1, 3,10,17), bold = TRUE) %>%
+  kable_styling("striped", full_width =  FALSE,
+                position = "center", 
+                font_size = 12,
+                fixed_thead = TRUE) %>%
+  # add_header_above(c(" " = 2, "Sample Period" = 3, 
+  add_header_above(c(" " = 1, "Sample Period" = 3,                   
+                     "Capture Timing" = 3,"Fork Length (mm)" = 5,
+                     "Capture Timing" = 3,"Fork Length (mm)" = 5)) %>%
+  add_header_above(c(" " = 4, "Coastal Cutthroat Trout" = 8, "Coho Salmon" = 8)) 
+```
+
+### 2.3.2. Migration Timing
+
+```{r 5. Capture Timing - Load Data, echo=FALSE, warning=FALSE, message = FALSE, include = FALSE}
+source("SourceFiles/5. Capture Timing.R")
+
+CT.first.detection.earliest <-  format(min(pass.period.spring$minPass.min[pass.period.spring$Species=="CT"]), "%B %d")
+CT.first.detection.latest   <-  format(max(pass.period.spring$minPass.min[pass.period.spring$Species=="CT"]), "%B %d")
+CT.first.detection.mean     <-  format(mean(pass.period.spring$minPass.min[pass.period.spring$Species=="CT"], na.rm = TRUE), "%B %d")
+CT.first.detection.SD       <-  round(sd(pass.period.spring$minMeanDiff[pass.period.spring$Species=="CT"], na.rm = TRUE), 1)` days)
+CO.first.detection.earliest <-  format(min(pass.period.spring$minPass.min[pass.period.spring$Species=="CO"]), "%B %d")
+CO.first.detection.latest   <-  format(max(pass.period.spring$minPass.min[pass.period.spring$Species=="CO"]), "%B %d")
+CO.first.detection.mean     <-  format(mean(pass.period.spring$minPass.min[pass.period.spring$Species=="CO"], na.rm = TRUE), "%B %d")
+CO.first.detection.SD       <-  round(sd(pass.period.spring$minMeanDiff[pass.period.spring$Species=="CO"], na.rm = TRUE), 1)
+
+
+
+```
+Outmigrating juvenile coastal cutthroat trout and Coho Salmon were first encountered at the trap over a similar period, from `r CT.first.detection.earliest` to `r CT.first.detection.latest` (mean $\pm$ SD = `r CT.first.detection.mean` $\pm$ `r CT.first.detection.SD days)` compared to `r CO.first.detection.earliest` to `r CO.first.detection.latest` (mean $\pm$ SD = `r CO.first.detection.mean` $\pm$ `r CO.first.detection.SD` days).
+
+
+
+Out migrating juvenile coastal cutthroat trout were first encountered as early as `r format(min(pass.period.spring$minPass.min[pass.period.spring$Species=="CT"]), "%B %d")` and as late as `r format(max(pass.period.spring$minPass.min[pass.period.spring$Species=="CT"]), "%B %d")` (mean $\pm$ SD = `r format(mean(pass.period.spring$minPass.min[pass.period.spring$Species=="CT"], na.rm = TRUE), "%B %d")` $\pm$ `r round(sd(pass.period.spring$minMeanDiff[pass.period.spring$Species=="CT"], na.rm = TRUE), 1)` days). The date of peak migration occurred later, from `r format(min(catch_peak.spring$date.std[catch_peak.spring$Species=="CT"]), "%B %d")` to `r format(max(catch_peak.spring$date.std[catch_peak.spring$Species=="CT"]), "%B %d")`, with an overall mean peak migration date of `r format(mean(catch_peak.spring$date.std[catch_peak.spring$Species=="CT"],na.rm = TRUE), "%B %d")` $\pm$ `r round(sd(catch_peak.spring$MeanDiff[catch_peak.spring$Species=="CT"],na.rm = TRUE),1)` days (Figure 5). On average, half of all migrants had moved past the fence by `r format(mean(catch50prop.spring$meanDate50p[catch50prop.spring$Species=="CT"], na.rm = TRUE), "%B %d")` $\pm$ `r round(sd(catch50prop.spring$Date50pDiff[catch50prop.spring$Species=="CT"], na.rm = TRUE), 1)` days, though this ranged from `r format(min(catch50prop.spring$date.50p[catch50prop.spring$Species=="CT"], na.rm = TRUE), "%B %d")` to `r format(max(catch50prop.spring$date.50p[catch50prop.spring$Species=="CT"], na.rm = TRUE), "%B %d")`.
+
+Similar to Coastal Cutthroat, out migrating juvenile Coho Salmon were first encountered from `r format(min(pass.period.spring$minPass.min[pass.period.spring$Species=="CO"]), "%B %d")` to `r format(max(pass.period.spring$minPass.min[pass.period.spring$Species=="CO"]), "%B %d")` (mean $\pm$ SD = `r format(mean(pass.period.spring$minPass.min[pass.period.spring$Species=="CO"], na.rm = TRUE), "%B %d")` $\pm$ `r round(sd(pass.period.spring$minMeanDiff[pass.period.spring$Species=="CO"], na.rm = TRUE), 1)` days). Relative to Coastal Cutthroat Trout, the date of peak Coho Salmon migration occurred later, from `r format(min(catch_peak.spring$date.std[catch_peak.spring$Species=="CO"]), "%B %d")` to `r format(max(catch_peak.spring$date.std[catch_peak.spring$Species=="CO"]), "%B %d")`, with an overall mean peak migration date of `r format(mean(catch_peak.spring$date.std[catch_peak.spring$Species=="CO"],na.rm = TRUE), "%B %d")` $\pm$ `r round(sd(catch_peak.spring$MeanDiff[catch_peak.spring$Species=="CO"],na.rm = TRUE),1)` days (Figure 5). Despite peak Coho Salmon migrations occurring relatively later, the mean date when half of the population had passed the fence occurred at a similar time to Coastal Cutthroat (`r format(mean(catch50prop.spring$meanDate50p[catch50prop.spring$Species=="CO"], na.rm = TRUE), "%B %d")` $\pm$ `r round(sd(catch50prop.spring$Date50pDiff[catch50prop.spring$Species=="CO"], na.rm = TRUE), 1)` days and ranging from `r format(min(catch50prop.spring$date.50p[catch50prop.spring$Species=="CO"], na.rm = TRUE), "%B %d")` to `r format(max(catch50prop.spring$date.50p[catch50prop.spring$Species=="CO"], na.rm = TRUE), "%B %d")`.
+
+```{r 5. Capture Timing - Peak Capture Histogram, fig.cap = "Figure 5. Histogram showing frequency of peak capture dates during Spring fence monitoring.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 12}
+
+Catch_Peak_Plot.Spring
+```
+
+```{r 5. Capture Timing - 50% Pass Histogram, fig.cap = "Figure 6. Histogram showing frequency of dates when 50% of migration had passed Spring fence monitoring.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 12}
+# 
+# DateHalfPassed.plot.spring
+# 
+# ```
+
+
+
+### GARBAGE TEXT---
+
+
+# 
+# <!-- colnames(pass.period.spring) -->
+# 
+# <!-- to `r format(pass.period.spring$maxPass.max[pass.period.spring$Species=="CT"], "%B %d")`. In contrast, the date that 50% of total out migrating Coho Salmon passed the fence ranged from `r format(pass.period.spring$minPass.min[pass.period.spring$Species=="CO"], "%B %d")` to `r format(pass.period.spring$maxPass.max[pass.period.spring$Species=="CT"], "%B %d")` monitoring years. Suggesting that CO migration may have continued beyond the last day of monitoring in `r percent(length(catch_annual.Table.Spring.calcs$CO_days.before.end[catch_annual.Table.Spring.calcs$CO_days.before.end==0])/length(catch_annual.Table.Spring.calcs$CT_days.before.end))` of monitoring years (i.e., total CO counts may be underestimated during these years). -->
+
+### GARBAGE TEXT----
+# 
+# Coho and Cutthroat were captured on the first day of trap operation in `r length(catch_annual.Table.Spring.calcs$CO_days.after.start[catch_annual.Table.Spring.calcs$CO_days.after.start==0])` and `r length(catch_annual.Table.Spring.calcs$CT_days.after.start[catch_annual.Table.Spring.calcs$CT_days.after.start==0])` years, respectively, suggesting that the trap was operating prior to the onset of the migration period in most years. At the end of the monitoring period, CO were captured on the last day of fence operation in `r length(catch_annual.Table.Spring.calcs$CO_days.before.end[catch_annual.Table.Spring.calcs$CO_days.before.end==0])` monitoring years (`r percent(length(catch_annual.Table.Spring.calcs$CO_days.before.end[catch_annual.Table.Spring.calcs$CO_days.before.end==0])/length(catch_annual.Table.Spring.calcs$Year))` of years). This suggests the total number of out migrating CO may be underestimated in more than half of all monitoring years. However, capture trends suggest that missed fish account for a limited proportion of total annual migrants (Figure 3). In contrast, CT were captured on the last day of monitoring in only `r length(catch_annual.Table.Spring.calcs$CT_days.before.end[catch_annual.Table.Spring.calcs$CT_days.before.end==0])` years (Figure 4).
+
+# daily_catch_summary_plot.Spring.CO
+```
+
+```{r Spring Capture Timing Plot - CT, fig.cap = "Figure 4. Total daily catch of Coastal Cutthroat Trout.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 15}
+
+daily_catch_summary_plot.Spring.CT
+```
+
+##--------------------------
+
+```{r exit}
+knitr::knit_exit()
+```
+
+##--------------------------
+
+```{r CCT - cum.Catch.plot,echo=FALSE, warning=FALSE, message = FALSE, fig.width = 9, fig.height = 15}
+
+labels <- data.frame(Year = unique(Spring.Catch$Year), YYYEAR = unique(Spring.Catch$Year)) %>%
+          # data.frame(Year = unique(CCT_catch$Year), YYYEAR = unique(CCT_catch$Year)) %>%
+          mutate(YYYEAR = ifelse(Year == 2020, "2020 - COVID",
+                                 ifelse(Year == 2021,"2021 - COVID",
+                                        ifelse(Year == 2023, "2023 - Strike",Year))),
+                 labX = as.Date(ifelse(Year == 2020, as.Date("2024-05-25"),
+                                 ifelse(Year == 2021,as.Date("2024-05-25"),
+                                        ifelse(Year == 2023, as.Date("2024-05-25"),as.Date("2024-04-16"))))))
+ggplot(Spring.Catch) + 
+      geom_col(aes(x= date.std, y =catch))+
+      geom_line(aes(x= date.std, y = prop.scaled)) +
+      geom_label(data = labels, aes(label = YYYEAR),
+                x = as.Date("2024-04-15"), y = 205,
+                hjust = "left", vjust = 0,
+                inherit.aes = FALSE)+
+      scale_x_date(date_breaks = "2 week", date_labels = "%b-%d") +
+      scale_y_continuous("Total Captures (# of Fish)",
+                         sec.axis = sec_axis(~./300, 
+                         name = "Proportion of Total Catch (%)"))+
+      facet_grid(Year~Species) +
+      labs(x="", y = "Total Captures (# of Fish)") +
+      theme_bw() +
+      theme(strip.text.y = element_blank())
+    
+```
+
+```{r CCT - cum.Catch.plot2,echo=FALSE, warning=FALSE, message = FALSE }
+    ggplot(CCT_catch) +
+        geom_line(aes(x= date.std, y = prop, color = Year)) +
+        labs(x = "", y = "Proportion of Total Catch (%)") +
+        scale_x_date(date_breaks = "1 week", 
+                     minor_breaks = "1 day",
+                     date_labels = '%b-%d')+ 
+        facet_grid(Decade~.)+
+        theme_bw() +
+        theme(legend.position = "bottom")
+
+
+
+```
+
+```{r CT Catch Summary, echo=FALSE, warning=FALSE, message = FALSE}
+### Prep Data ----
+CT_catch <- catch_summary %>%
+            select(1:13) %>%  # Select CT Data
+            pivot_wider(names_from = Period, values_from = 3:13) %>%
+            select(1, ends_with("Spring"), ends_with("Fall")) %>%
+            ungroup() %>%
+            add_row(Year = c(2020, 2021, 2023)) %>%
+            arrange(Year)
+
+
+## CT Kable ----
+kable(CT_catch,
+      "html",
+      booktabs = T,
+      align = c("c"),
+      col.names = c("Year","Start", "End", "# Days Sampled",  
+                    "n","Med.","Min","Max", "Mean", "SD" ,"Min","Max",
+                    "Start", "End", "# Days Sampled",  
+                    "n","Med.","Min","Max", "Mean", "SD" ,"Min","Max"),
+      caption = "**Table 1. Spring and Fall Trapping of Coastal Cutthroat Trout.**",
+      digits = 1) %>%
+  #column_spec(c(1, 3,10,17), bold = TRUE) %>%
+  kable_styling("striped", full_width =  FALSE,
+                position = "center", 
+                font_size = 12,
+                fixed_thead = TRUE) %>%
+  add_header_above(c(" "=1, "Sample Period" = 3, "Capture Timing" = 4,"Fork Length (mm)" = 4,
+                     "Sample Period" = 3, "Capture Timing" = 4,"Fork Length (mm)" = 4)) %>%
+  add_header_above(c(" " = 1,"Spring" = 11, "Fall" = 11)) 
+ 
+```
+
+```{r CT Size Distribution, length-frequency all years,echo=FALSE, warning=FALSE, message = FALSE}
+## Length-Frequency Plot of all CCT captured to date.
+    ## Prepare Data
+    CT_dat <- data_all %>% 
+                    filter(Species == "CT") %>%
+                    mutate(date.std =  case_when(year(Date) >= 0 ~ 'year<-'(Date, 2024))) 
+                    
+
+      ## Prepare Plot
+      all_years.plot <- ggplot(CT_dat) +
+                            geom_histogram(aes(x = Length), binwidth = 5, color = "black", fill = "white") + 
+                            labs(x = "Fork Lenght (mm)", y = "Frequency (# Fish)") +
+                            scale_x_continuous(breaks = seq(50, 450, by = 25))+
+                            #scale_y_continuous(breaks = seq(0, 450, 50))+
+                            theme(axis.text.x = element_text(angle = 45, vjust = 1.2, hjust = 1)) +
+                            theme_bw() +
+                            facet_grid(Year~.)
+```
+
+```{r compare regional trends, echo=FALSE, warning=FALSE, message = FALSE}
+## Prep Regional Abundance Dataset
+reg.abund <- reg.dat %>% 
+                mutate(data_set = "DFO") %>%
+                select(data_set, year, species, spawners, smoothedSpawners) %>%
+                rename(Year     = year,
+                       Species  = species,
+                       n        = spawners,
+                       n_smooth = smoothedSpawners) %>% 
+                mutate(Species = recode(as.factor(Species),
+                                                 "Coho"      = "CO_Adult",
+                                                 "Chinook"   = "CN",
+                                                 "Pink"      = "PK",
+                                                 "Chum"      = "CM",
+                                                 "Sockeye"   = "SK",
+                                                 "Steelhead" = "ST"),
+                                Species = factor(Species, 
+                                                 levels = c("CT","CO_Adult", "CN","CM","PK", "SK", "ST")))
+# Prepare Simms Data and Join with Regional Data                
+catch_spring <- data_all %>%
+                    filter(Period == "Spring",
+                           Species %in% c("CT", "CO")) %>%
+                    group_by(Year,Species) %>%
+                    summarise(n = n()) %>%
+                    filter(!is.na(Species)) %>%
+                    mutate(n_smooth = 0,
+                           data_set = "Simms") %>% 
+                    relocate(data_set) %>%
+                rbind(reg.abund)
+
+catch_spring_CO <- catch_spring %>%
+      filter(Year >= 2008) %>%
+      select(!n_smooth)
+
+ggplot(catch_spring_CO, aes(x = Year, y = n)) +
+  geom_point() + 
+  geom_line() + 
+  facet_grid(Species ~., scales = "free")
+
+catch_spring_long <- catch_spring_CO %>%
+      select(!data_set) %>%
+      pivot_wider(names_from = Species, values_from = n) %>%
+      drop_na()
+
+cor(catch_spring_long)
+```
+
+# Annual Fence Monitoring Effort and Catches
+
+```{r, Trap Summary, echo=FALSE, warning=FALSE, message = FALSE}
+# When trap was operated
+  ## Create Date Sequence - All dates when trap could be checked
+  date_seq <- data.frame(Date = seq(ymd('2008-04-15'), ymd('2024-06-15'), by = 'days')) %>%
+                  mutate(Month = strftime(Date, format = "%m"),
+                         Month = as.numeric(Month)) %>%
+                  filter(between(Month,4,6))
+
+  ## Which days trap was operated each year
+  trap <- juv %>%
+            group_by(Date) %>%
+            summarize(n = 1) %>%
+            mutate(Year = strftime(Date, format = "%Y"))
+  
+  ## Proportion of survey period that was monitored.
+  trap_ops <- left_join(date_seq, trap, by = "Date") %>%
+              mutate(n = coalesce(n, 0)) %>%
+              group_by(Year) %>%
+              dplyr::summarize(Start = as.Date(min(Date)),
+                              End   = as.Date(max(Date)),
+                              SamplePeriod = as.numeric((End-Start)+1),
+                              DaysSampled = sum(n)) %>%
+              mutate(prop.sample.period =  percent(DaysSampled/SamplePeriod),
+                     prop.mig.period = percent(DaysSampled/75),
+                     Year  = as.numeric(Year),
+                     Start = format(Start, "%b-%d"),
+                     End   = format(End, "%b-%d"))
+  
+
+  
+
+    ## Number of Fish Tallied Annually
+  annual_tally <- simms_bio_all %>%
+                  ungroup %>%
+                  filter(Species == "CO" | Species == "CT") %>%
+                  group_by(Year, Species) %>%
+                  dplyr::summarise(n = n()) %>%
+                  pivot_wider(names_from = "Species", values_from = "n")
+
+## Summary Table
+summary_table <- left_join(trap_ops,annual_tally, by = "Year") %>%
+                     filter(!is.na(Year)) %>%
+                     select(1:3,5:9) %>%
+                     mutate(Total = CO + CT)
+
+```
+
+Fence monitoring starts in April and continues through late May to mid June. The first day of trap operation has ranged from `r format(min(as.Date(trap_ops$Start, "%b-%d")),"%b-%d")` to `r format(max(as.Date(trap_ops$Start, "%b-%d")), "%b-%d")` (mean = `r format(mean(as.Date(trap_ops$Start, "%b-%d")),"%b-%d")`). Once monitoring was initiated the traps were checked nearly continuously, with an average of `r round(mean(trap_ops$prop.sample.period),1)` of days being monitored. After a mean of `r round(mean(trap_ops$DaysSampled),0)` days the trap was dismantled and monitoring was ceased between `r format(min(as.Date(trap_ops$End, "%b-%d")),"%b-%d")` and `r format(max(as.Date(trap_ops$End, "%b-%d")),"%b-%d")` (mean = `r format(mean(as.Date(trap_ops$End, "%b-%d")),"%b-%d")`).
+
+Annual trap operation periods and total captures of Coastal Cutthroat Trout and Coho Salmon are presented below in Table 1.
+
+```{r display.table, echo = FALSE, warning = FALSE, message = FALSE}
+## Prepare Kable Table
+kable(summary_table,
+      "html",
+      booktabs = T,
+      align = c("c"),
+      col.names = c("Year", "Start", "End", "# Days Sampled", "Sample Period", "Migration Period", "CO", "CCT", "Total"),
+      caption = "**Table 1. Annual trap operation period, proportion of operation period that was monitored, proportion of migration period that was monitored (Apr 1 to June 15), and number of Coho Salmon and Coastal Cutthroat Trout that were tallied.**",
+      digits = 1) %>%
+  #column_spec(c(1, 3,10,17), bold = TRUE) %>%
+  kable_styling("striped", full_width =  FALSE,
+                position = "center", 
+                font_size = 12,
+                fixed_thead = TRUE) %>%
+  add_header_above(c(" " = 1, "Sample Period" = 3, "Prop. Sampled (%)"= 2, "# Fish Tallied" =3)) 
+```
+
+```{original table, echo=FALSE, warning=FALSE, message = FALSE }
+CCT_table <-  simms_bio %>% 
+                group_by(Year, Species) %>%
+                dplyr::summarize(
+                                 # Start_Date = as.Date(min(Date), "%b-%d"),
+                                 # End_Date   = as.Date(max(Date), "%b-%d"),
+                                 # Survey_Length = 1+(as.Date(End_Date) - as.Date(Start_Date)),
+                                 n          = n(),
+                                 FL_mean = mean(Length, na.rm = TRUE),
+                                 FL_SD   = sd(Length, na.rm = TRUE),
+                                 FL_min  = min(Length, na.rm = TRUE),
+                                 FL_max  = max(Length, na.rm = TRUE),
+                                 WT_mean = mean(Weight, na.rm = TRUE),
+                                 WT_min  = min(Weight, na.rm = TRUE),
+                                 WT_max  = max(Weight, na.rm = TRUE)) %>%
+                  # mutate(Start_Date = format(Start_Date, "%b-%d"),
+                  #        End_Date = format(End_Date, "%b-%d")) %>%
+                  #select("Year","Direction", "Start_Date","End_Date","Survey_Length","n","FL_mean","FL_SD","FL_min","FL_max")
+                  select(1:11)
+
+## Prepare Kable Table
+kable(CCT_table,
+      "html",
+      booktabs = T,
+      align = c("c"),
+      col.names = c("Species", "Year", "Direction","Start", "End", "Duration","Total \nCatch", "Mean", "SD", "Min", "Max"),
+      caption = "**Table 1. Total annual captures of Coastal Cutthroat Trout during spring fish fence operation on Simms Creek.**",
+      digits = 1) %>%
+  #column_spec(c(1, 3,10,17), bold = TRUE) %>%
+  kable_styling("striped", full_width =  FALSE,
+                position = "center", 
+                font_size = 12,
+                fixed_thead = TRUE) %>%
+  add_header_above(c(" " = 3, "Period" = 3, "","Fork Length (mm)" = 4)) 
+```
+
+## Coastal Cutthroat Trout
+
+As previously mentioned, I like CCT, so let's start there. We will look at the size of fish being captured, when the majority of the fish are migrating, and start to consider what may be driving some of the variability in migrants between years.
+
+```{r, length-frequency all years PRINT, echo=FALSE, fig.width = 10, fig.height = 7}
+suppressWarnings(print(all_years.plot))
+```
+
+**`r fig_nums("all_years.plot", "Length-frequency of all Coastal Cutthroat Trout captured since 2008.")`**
+
+```{r, length-frequency by year,  echo=FALSE, warning=FALSE, message = FALSE}
+## Length-Frequency Plot of CCT captured in each year
+    ## Prepare Data
+    annual.plot <- ggplot(CT_dat) +
+                        geom_histogram(aes(x = Length), binwidth = 5, color = "black", fill = "white") + 
+                        labs(x = "Fork Lenght (mm)", y = "Frequency (# Fish)") +
+                        scale_x_continuous(breaks = seq(0, 500, by = 20))+
+                        #scale_y_continuous(breaks = seq(0, 450, 50))+
+                        theme(axis.text.x = element_text(angle = 45, vjust = 1.2, hjust = 1)) +
+                        theme_bw() + 
+                        facet_grid(Year~Direction)
+```
+
+```{r, length-frequency by yearPRINT, echo=FALSE, fig.width = 14, fig.height = 35}
+suppressWarnings(print(annual.plot))
+```
+
+**`r fig_nums("annual.plot", "Length-frequency of Coastal Cutthroat Trout captured during annual monitoring.")`**
+
+### Capture Timing
+
+```{r,  echo=FALSE, warning=FALSE, message = FALSE}
+## Prep Data
+    ## Catch Data
+    CCT_catch <- simms_bio %>% 
+                 filter(Species == "CT") %>%
+                 group_by(Date, Direction) %>%
+                 summarize(catch = n()) %>%
+                 mutate(Year = strftime(Date, format = "%Y")) %>%
+                 ungroup() %>%
+                 group_by(Year) %>%
+                 mutate(cum_catch   = cumsum(catch),
+                        total_catch = max(cum_catch),
+                        prop        = cum_catch/total_catch,
+                        date.std    = case_when(year(Date) >= 0 ~ 'year<-'(Date, 2024)))
+
+    # ## Date Sequence
+    # date_seq <- data.frame(Date = as.Date(seq(ymd('2008-04-15'), ymd('2025-06-15'), by = 'days'))) %>%
+    #                         mutate(Month = strftime(Date, format = "%m"),
+    #                                Month = as.numeric(Month)) %>%
+    #                         filter(between(Month,4,6))
+    #                         
+    # 
+    # ## Join date_seq w. catch data
+    # catch_daily <- left_join(date_seq, CCT_DS, by = "Date") %>%
+    #                    mutate(catch = coalesce(catch, 0),  
+    #                           Year = strftime(Date, format = "%Y"),
+    #                           Year = as.numeric(Year),
+    #                           Month = strftime(Date, format = "%m"),
+    #                           Month = as.numeric(Month),
+    #                           Weeknum = strftime(Date, format = "%V"),
+    #                           Weeknum = as.numeric(Weeknum))
+    # 
+    # ## 
+    # CCT_catchDS <- CCT_catch %>% 
+    #                filter(Direction == "Downstream") %>%
+    #                mutate(date.std = case_when(year(Date) >= 0 ~ 'year<-'(Date, 2024))) 
+    
+    daily_catch <- ggplot(CCT_catch) + 
+                      geom_line(aes(x = date.std, y = prop, color = Direction)) +
+                      labs(x = "", y = "Proportion of Total Annual Catch") +
+                      scale_x_date(date_minor_breaks = "1 day", 
+                           date_breaks = '1 week', 
+                           date_labels = '%b-%d', 
+                           limits = c(as.Date("2024-04-01"), as.Date("2024-06-15"))) +
+                      facet_grid(Year~.) +
+                      theme(legend.position = "bottom") +
+                      theme_bw()
+
+```
+
+```{r, daily_catches, echo=FALSE, fig.width = 10, fig.height = 15}
+suppressWarnings(print(daily_catch))
+```
+
+**`r fig_nums("daily_catch", "Proportion of total annual upstream and downstream catches.")`**
+
+```{r}
+all_catches <- simms_bio %>% 
+               group_by(Species, Date, Direction) %>%
+               summarize(catch = n()) %>%
+               mutate(Year = strftime(Date, format = "%Y")) %>%
+               ungroup() %>%
+               group_by(Year) %>%
+               mutate(cum_catch   = cumsum(catch),
+                      total_catch = max(cum_catch),
+                      prop        = cum_catch/total_catch,
+                      date.std    = case_when(year(Date) >= 0 ~ 'year<-'(Date, 2024))) %>%
+               filter(!is.na(Direction))
+    
+daily_box <- ggplot(all_catches) + 
+                    geom_line(aes(x = date.std, y = catch, color = Species)) +
+                    labs(x = "", y = "Proportion of Total Annual Catch") +
+                    scale_x_date(date_minor_breaks = "1 day", 
+                           date_breaks = '1 week',
+                           date_labels = '%b-%d',
+                           limits = c(as.Date("2024-04-01"), as.Date("2024-06-15"))) +
+                    facet_grid(Year~Direction) +
+                    theme(legend.position = "bottom") +
+                    theme_bw() 
+```
+
+```{r, daily_box, echo=FALSE, fig.width = 10, fig.height = 15}
+suppressWarnings(print(daily_box))
+```
+
+**`r fig_nums("daily_box", "Boxplot showing range of captures of CCT and CO salmon.")`**
+
+## Coho Salmon

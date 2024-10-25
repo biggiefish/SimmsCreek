@@ -1,0 +1,11 @@
+"0",""
+"0","labels <- data.frame(Year = unique(Spring.Catch$Year), YYYEAR = unique(Spring.Catch$Year)) %>%"
+"0","          # data.frame(Year = unique(CCT_catch$Year), YYYEAR = unique(CCT_catch$Year)) %>%"
+"0","          mutate(YYYEAR = ifelse(Year == 2020, ""2020 - COVID"","
+"0","                                 ifelse(Year == 2021,""2021 - COVID"","
+"0","                                        ifelse(Year == 2023, ""2023 - Strike"",Year))),"
+"0","                 labX = as.Date(ifelse(Year == 2020, as.Date(""2024-05-25""),"
+"0","                                 ifelse(Year == 2021,as.Date(""2024-05-25""),"
+"0","                                        ifelse(Year == 2023, as.Date(""2024-05-25""),as.Date(""2024-04-16""))))))"
+"2","Error: object 'Spring.Catch' not found
+"
