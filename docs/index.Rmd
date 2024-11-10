@@ -17,10 +17,12 @@ output:
     toc: yes
 editor_options:
   chunk_output_type: inline
+
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+
 ```
 
 # 1. Introduction
@@ -43,7 +45,7 @@ Throughout this analysis, I will aim to answer the following questions:
 
 5.  What is the freshwater survival of Coho Salmon? Note that we cannot estimate marine survival without some information on individual fish (i.e., coded wire tag data to verify that returning adults originated in Simms Creek and when they smolted).
 
-6.  What proportion of returning Coho Salmon are hatchery origin? Have any hatchery origin trout been encountered (not actually sure if there aer many hatchery reared trout at the moment, and if so, if they are marked).
+6.  What proportion of returning Coho Salmon are hatchery origin? Have any hatchery origin trout been encountered (not actually sure if there are many hatchery reared trout at the moment, and if so, if they are marked).
 
 7.  What factors may be contributing to observed trends in abundance?
 
@@ -51,13 +53,15 @@ But before we can do that, lets take a look at what has been completed to date. 
 
 ```{r 1. Load and Format Data, echo = FALSE, warning = FALSE, message = FALSE}
 ## Clear workspace ##
-rm(list = ls())  
+# rm(list = ls())  
 
 # ## Load Prepped Data
-# source("SourceFiles/1. Load and Prep Data.R")
-
-## Load Trap Effort Data
-source("SourceFiles/2. Trapping Effort.R")
+ # source("SourceFiles/0. RunSourceFiles.R")
+# 
+  source("SourceFiles/1. Load and Prep Data.R")
+# 
+# ## Load Trap Effort Data
+ source("SourceFiles/2. Trapping Effort.R")
 
 ```
 
@@ -96,30 +100,32 @@ options(knitr.kable.NA = '-')
 
 ```{r 2. Trap Effort - Spring Plot, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 15, fig.height = 5, fig.cap = "Figure 1. Spring juvenile trap operation effort, presented as the proportion of sample years when trapping was completed on each date.", fig.topcaption = TRUE}
 
-trap_effort_plot_spring
+print(trap_effort_plot_spring)
 
 ```
 
 <!-- **`r fig_nums("spring.trap.plot", "Spring trap operation period, presented as the proportion of sample years each date has been trapped since 2008 (excluding years when trapping did not occur due to COVID or government strikes).")`** -->
 
-```{r 2. Trap Effort - Fall Plot, fig.cap = "Figure 2. Fall adult trapping effort, presented as the proportion of sample years when trapping was completed on each date.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 15, fig.height = 5}
+```{r 2. Trap Effort - Fall Plot, fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 15, fig.height = 5, fig.cap = "Figure 2. Fall adult trapping effort, presented as the proportion of sample years when trapping was completed on each date."}
 
-trap_effort_plot_fall
+print(trap_effort_plot_fall)
 
 ```
 
 <!-- **`r fig_nums("fall.trap.plot", "Fall trap operation period, presented as the proportion of sample years each date has been trapped since 2008 (excluding years when trapping did not occur due to COVID or government strikes).")`** -->
 
-## 2.2 Stream Conditions
+
 
 ```{r 3. Stream Conditions - Load Data, echo=FALSE, warning=FALSE, message = FALSE}
 
 ## Load Stream Conditions Data 
-source("SourceFiles/3. Stream Conditions.R")
+ source("SourceFiles/3. Stream Conditions.R")
 
 ```
 
-During each trap daily trap visit, volunteers record measures of water temperature, pH, Total Suspended Sediment (TSS), dissolved oxygen, and water level (stage). Mean annual measures of each parameter are presented below for the Spring monitoring period (Table 2 and Figure 3).
+### 2.2 Stream Conditions
+
+During each daily trap visit, volunteers record measures of water temperature, pH, Total Suspended Sediment (TSS), dissolved oxygen, and water level (stage). Mean annual measures of each parameter are presented below for the Spring monitoring period (Table 2 and Figure 3). 
 
 ```{r 3. Stream Conditions - Spring Table, fig.cap = "Table 2. Overall annual stream conditions during spring trap monitoring from 2008 to 2024.", fig.topcaption = TRUE,echo=FALSE, warning=FALSE, message = FALSE}
 
@@ -147,17 +153,15 @@ options(knitr.kable.NA = '-')
                               "pH \n. " = 2, "DO \n(mg/L)" = 2, "TDS \n(ppm)" = 2, "Water Level \n(m)" = 2)) %>%
   add_header_above(c("Year"= 1, "Spring Monitoring" = 12))    
 
-
-
 ```
 
 
 ```{r 3. Stream Conditions - Plot, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 15, fig.cap = "Figure 3. Average daily measures of air and water temperature, pH, dissolved oxygen (DO), total dissolved solids (TDS) and water level (stage).", fig.topcaption = TRUE}
 
-cond_plot
+print(cond_plot)
 ```
 
-## 2.3. Annual Captures
+### 2.3. Annual Captures
 
 ```{r 4. Fish Captures - Summary Table catch_dat.prep, echo=FALSE, warning=FALSE, message = FALSE, include = FALSE}
 source("SourceFiles/4. Annual Captures.R")
@@ -167,7 +171,7 @@ Since 2008, a total of `r format(sum(catch_annual.Table.Spring$nCT), big.mark ="
 
 ```{r 4. Annual Captures - Summary Plot, fig.cap = "Figure 4. Total annual catch of Coastal Cutthroat Trout and Coho Salmon during Spring fence monitoring.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 12}
 
-catch_annual_barPlot.Spring
+print(catch_annual_barPlot.Spring)
 ```
 
 ```{r Annual Captures - SummaryTable, echo=FALSE, warning=FALSE, message = FALSE}
@@ -197,21 +201,22 @@ kable(catch_annual.Table.Spring,
   add_header_above(c(" " = 4, "Coastal Cutthroat Trout" = 8, "Coho Salmon" = 8)) 
 ```
 
-## 2.4. Migration Timing
+### 2.4. Migration Timing
 
 ```{r 5. Capture Timing - Load Data, echo=FALSE, warning=FALSE, message = FALSE, include = FALSE}
-source("SourceFiles/5. Capture Timing.R")
+ source("SourceFiles/5. Capture Timing.R")
 ```
 
 ```{r 5. Capture Timing - Prepare text values, echo=FALSE, warning=FALSE, message = FALSE, include = FALSE }
+
 CT.first.detection.earliest <- format(min(pass.period.spring$minPass.min[pass.period.spring$Species=="CT"]), "%B %d")
 CT.first.detection.latest   <- format(max(pass.period.spring$minPass.min[pass.period.spring$Species=="CT"]), "%B %d")
 CT.first.detection.mean     <- format(mean(pass.period.spring$minPass.min[pass.period.spring$Species=="CT"], na.rm = TRUE), "%B %d")
 CT.first.detection.SD       <- round(sd(pass.period.spring$minMeanDiff[pass.period.spring$Species=="CT"], na.rm = TRUE), 1)
 CT.50p.mean                 <- format(mean(catch50prop.spring$meanDate50p[catch50prop.spring$Species=="CT"], na.rm = TRUE), "%B %d")
 CT.50p.SD                   <- round(sd(catch50prop.spring$Date50pDiff[catch50prop.spring$Species=="CT"], na.rm = TRUE), 1)
-CT.peak.mean                <- format(mean(catch_peak.spring$date.std[catch_peak.spring$Species=="CT"],na.rm = TRUE), "%B %d")
-CT.peak.SD                  <- round(sd(catch_peak.spring$MeanDiff[catch_peak.spring$Species=="CT"],na.rm = TRUE),1)
+CT.peak.mean                <- format(mean(catch_peak.spring$date.std_CT,na.rm = TRUE), "%B %d")
+CT.peak.SD                  <- round(sd(catch_peak.spring$MeanDiff_CT,na.rm = TRUE),1)
 
 
 CO.first.detection.earliest <- format(min(pass.period.spring$minPass.min[pass.period.spring$Species=="CO"]), "%B %d")
@@ -220,26 +225,29 @@ CO.first.detection.mean     <- format(mean(pass.period.spring$minPass.min[pass.p
 CO.first.detection.SD       <- round(sd(pass.period.spring$minMeanDiff[pass.period.spring$Species=="CO"], na.rm = TRUE), 1)
 CO.50p.mean                 <- format(mean(catch50prop.spring$meanDate50p[catch50prop.spring$Species=="CO"], na.rm = TRUE), "%B %d")
 CO.50p.SD                   <- round(sd(catch50prop.spring$Date50pDiff[catch50prop.spring$Species=="CO"], na.rm = TRUE), 1)
-CO.peak.mean                <- format(mean(catch_peak.spring$date.std[catch_peak.spring$Species=="CO"],na.rm = TRUE), "%B %d")
-CO.peak.SD                  <- round(sd(catch_peak.spring$MeanDiff[catch_peak.spring$Species=="CO"],na.rm = TRUE),1)
-
+CO.peak.mean                <- format(mean(catch_peak.spring$date.std_CO,na.rm = TRUE), "%B %d")
+CO.peak.SD                  <- round(sd(catch_peak.spring$MeanDiff_CO,na.rm = TRUE),1)
 
 ```
 
-Outmigrating juvenile coastal cutthroat trout and Coho Salmon were first encountered at the trap over a similar period, from `r CT.first.detection.earliest` to `r CT.first.detection.latest` (mean $\pm$ SD = `r CT.first.detection.mean` $\pm$ `r CT.first.detection.SD` days) for cutthroat and  `r CO.first.detection.earliest` to `r CO.first.detection.latest` for Coho (mean $\pm$ SD = `r CO.first.detection.mean` $\pm$ `r CO.first.detection.SD` days). On average 50% of all cutthroat trout had passed the fence by `r CT.50p.mean`$\pm$ `r CT.50p.SD` days while half of Coho Salmon migrants had passed the fence by `r CO.50p.mean`$\pm$ `r CO.50p.SD` days. Despite similarities in when migrations started and the timing that most migrations had past the fence, there was a noticeable difference in the timing of peak migrations (date when most fish passed the fish). For Coastal Cutthroat, the overall mean $\pm$ SD peak migration occurred on `r CT.peak.mean`($\pm$ `r CT.peak.SD` days) whereas overall mean peak Coho Salmon migration occurred more than a week later on `r CO.peak.mean` ($\pm$ `r CO.peak.SD` days) (Figure 5). Total number of daily captures of Cutthroat Trout and Coho Salmon per year are presented in Figure 6 and Figure 7, respectively. 
+Outmigrating juvenile coastal cutthroat trout and Coho Salmon were first encountered at the trap over a similar period, from `r CT.first.detection.earliest` to `r CT.first.detection.latest` (mean $\pm$ SD = `r CT.first.detection.mean` $\pm$ `r CT.first.detection.SD` days) for cutthroat and  `r CO.first.detection.earliest` to `r CO.first.detection.latest` for Coho (mean $\pm$ SD = `r CO.first.detection.mean` $\pm$ `r CO.first.detection.SD` days). On average 50% of all cutthroat trout had passed the fence by `r CT.50p.mean`$\pm$ `r CT.50p.SD` days while half of Coho Salmon migrants had passed the fence by `r CO.50p.mean`$\pm$ `r CO.50p.SD` days. Despite similarities in when migrations started and the timing that most migrants had past the fence, there was a noticeable difference in the timing of peak migrations (the date when the greatest number of fish passed the fence). For Coastal Cutthroat, the overall mean $\pm$ SD peak migration occurred on `r CT.peak.mean`($\pm$ `r CT.peak.SD` days) whereas overall mean peak Coho Salmon migration occurred more than a week later on `r CO.peak.mean` ($\pm$ `r CO.peak.SD` days) (Figure 5). Total number of daily captures of Cutthroat Trout and Coho Salmon per year are presented in Figure 6 and Figure 7, respectively. 
 
 
 ```{r 5. Capture Timing - Peak Capture Histogram, fig.cap = "Figure 5. Histogram showing frequency of peak capture dates during Spring fence monitoring.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 12}
 
-Catch_Peak_Plot.Spring
+ print(Catch_Peak_Plot.Spring)
+
+
 ```
 
 ```{r 5. Capture Timing - Daily CT Captures, fig.cap = "Figure 6. Number of Coastal Cutthroat Trout captured during each day of spring fence operation since 2008.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 25}
-daily_catch_plot.Spring.CT
+
+print(daily_catch_plot.Spring.CT)
 ```
 
 ```{r 5. Capture Timing - Daily CO Captures, fig.cap = "Figure 7. Number of Coho Salmon captured during each day of spring fence operation since 2008.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 25}
-daily_catch_plot.Spring.CO
+
+print(daily_catch_plot.Spring.CO)
 ```
 
 

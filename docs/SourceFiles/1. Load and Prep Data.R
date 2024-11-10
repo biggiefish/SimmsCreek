@@ -60,40 +60,57 @@
         fig_nums   <- captioner(prefix = "Figure")  
         table_nums <- captioner(prefix = "Table")
         
+
+    ## Load Packages ----            
     ## Flood Decade
         floor_decade    = function(value){ return(value - value %% 10) }
-    
-    ## Define Working Directory ---
-        setwd("C:/Users/evogt/R Analysis/EAV/GitHubMarkdown/SimmsCreek/docs")
         
+    ## Coalesce by column    
+        coalesce_by_column <- function(df) {
+          return(coalesce(df[1], df[2]))
+        }
+        
+    ## Rounding function    
+        rounder <- function(x){
+                      round(x+5,-1)
+        }
+    
 # x- - - - - - - - - - - - - - - - - - - - - - -  ----
+# xxx Define Global Loop Parameters ----
+        
+        spp <- c("CO", "CT")
+        sample_period <- c("Spring", "Fall")
+        spring_years <- as.factor(c(2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2022, 2024))
+        fall_years  <- as.factor(c(2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2022, 2023))
+
 # xxx Load Data xxx ----
-  ## * Load Bio Data (Juvenile and Adult) ----
+  ## * 1.0 Load Bio Data (Juvenile and Adult) ----
       data_sets <- c("Juvenile","Adult")
     
           for(i in data_sets){
+
             #1.1 List of all files in Directory 
-            files_list <- list.files(paste0("Data/",i ,"/"), pattern = "*.xlsx", full.names = TRUE)
+                files_list <- list.files(paste0("Data/",i ,"/"), pattern = "*.xlsx", full.names = TRUE)
             
-            # Use lapply to read in all files and store them as list elements in one list
-            list_of_dfs <- lapply(as.list(files_list), function(x) readWorkbook(x, sheet = "SimmsBioData"))
-            
-            # Create a vector of names based on the year of data collection. 
-            df_names2 <- paste0(i,"_SimmsBio_", as.numeric(str_extract(files_list, "(\\d)+")))
-            
-            # Assign the names to our list of dfs
-            names(list_of_dfs) <- df_names2
+                # Use lapply to read in all files and store them as list elements in one list
+                    list_of_dfs <- lapply(as.list(files_list), function(x) readWorkbook(x, sheet = "SimmsBioData"))
+                
+                # Create a vector of names based on the year of data collection. 
+                    df_names2 <- paste0(i,"_SimmsBio_", as.numeric(str_extract(files_list, "(\\d)+")))
+                
+                # Assign the names to our list of dfs
+                    names(list_of_dfs) <- df_names2
             
             #1.2 Dunno what this does...
-            dfs_list <-lapply(list_of_dfs, "[")
-            # my_cols <- c("Date", "Species", "Stage", "US/DS", "Length", "Weight", "Comments")
+                  dfs_list <-lapply(list_of_dfs, "[")
+                  # my_cols <- c("Date", "Species", "Stage", "US/DS", "Length", "Weight", "Comments")
             
             #1.3 Prepare final dataframe
-            df <-   bind_rows(dfs_list, .id = "Dataset")
+                  df <-   bind_rows(dfs_list, .id = "Dataset")
             
-            ## Rename dataframe based on looping variable (e.g., Juvenile or Adult)
-            assign(paste("simms_bio_",i, sep=""), df) %>%
-              mutate(MonitorPeriod = i)
+                ## Rename dataframe based on looping variable (e.g., Juvenile or Adult)
+                    assign(paste("simms_bio_",i, sep=""), df) %>%
+                      mutate(MonitorPeriod = i)
           }
     
     ### * * Format Juvenile Data ----
@@ -151,7 +168,7 @@
     # * Load Environmental Data ----
     for(i in data_sets){
       #1.1 List of all files in Directory 
-      files_list <- list.files(paste0("Data/",i ,"/"), pattern = "*.xlsx", full.names = TRUE)
+      files_list <- list.files(paste0("Data//",i ,"/"), pattern = "*.xlsx", full.names = TRUE)
       
       # files_list <- list.files(paste0("Data/Adult/"), pattern = "*.xlsx", full.names = TRUE)
       
@@ -203,8 +220,9 @@
     data_all <- left_join(date_seq,simms_env, by = c("Date"), suffix = c("","_Env")) %>%
                   left_join(., data_all_bio, by = c("Date","Period"), suffix = c("","_Bio"), relationship = "many-to-many") %>%
                   mutate(Year = as.numeric(format(Date, format = "%Y")),
-                         Period = factor(Period, levels = c("Spring","Fall"))) %>%
-                  select(Year, Period, Date, Month, Time,    Air.Temp, Water.Temp, 
+                         Period = factor(Period, levels = c("Spring","Fall")),
+                         date.std = case_when(year(Date) >= 0 ~ 'year<-'(Date, 2024))) %>%
+                  select(Year, Period, Date, date.std, Month, Time, Air.Temp, Water.Temp, 
                          pH,   DO,     TDS,  Gauge, Weather, Direction, Species, Length, Weight, Comments)
                 
     xx <- data_all %>% filter(complete.cases(Period))
@@ -222,15 +240,16 @@
 # * Add Local Climate Data ----
     ## * * Load Daily Climate Data ----
     ## list all files in directory
-    all_daily_files <- list.files("Data/Climate/Daily/", pattern = '\\.csv$', full.names = TRUE)
+    all_daily_files <- list.files("Data//Climate/Daily/", pattern = '\\.csv$', full.names = TRUE)
     
     ## ID Columns to Import
     cols <- c("STATION_NAME", "LOCAL_DAY","LOCAL_YEAR","LOCAL_MONTH", "LOCAL_DATE",
               "TOTAL_RAIN","TOTAL_PRECIPITATION","MIN_TEMPERATURE","MAX_TEMPERATURE","MEAN_TEMPERATURE")
     
     ## Load all files in directory and select specific columns
-    wx.daily.data <- map_df(all_daily_files,
-                            ~.x %>% readr::read_csv() %>% select(cols), id = 'filenum')
+    wx.daily.data <- map_df(all_daily_files,~.x %>% 
+                              readr::read_csv() %>% 
+                     select(cols), id = 'filenum')
     
     ## * * Load Hourly Climate Data ----
     ## list all files in directory
@@ -239,19 +258,32 @@
     ## ID Columns to Import
     cols <- c("Station.Name", "Year","Month", "Date.Time..LST." , "Day", "Time..LST." , "Temp...C.",
               "Precip..Amount..mm.", "Stn.Press..kPa.", "Hmdx", "Wind.Chill", "Weather")
+
     
-    ## Load all files in directory 
+    # Load all files in directory
     wx.hr.data <- all_hr_files %>%
       ## Convert all inputs to character format
       map_df(~read_csv(., col_types = cols(.default = "c"))) %>%
-      mutate(DateTime      = ymd_hms(`Date/Time (LST)`),
+      ## rename temperature column
+      rename(Temp = starts_with("Temp (")) %>%
+      
+      ## Select columns of interest
+      select(StationName = "Station Name", 
+             DateTime ="Date/Time (LST)", 
+             # Temp = "Temp (\260 C)",
+             Temp,
+             Rel.Humid = "Rel Hum (%)", 
+             WindSpeed.kmh = "Wind Spd (km/h)",
+             Baro.kPa = "Stn Press (kPa)",
+             Weather) %>%
+      ## convert to appropriate format
+      mutate(DateTime      = ymd_hms(DateTime),
              Date          = as.Date(DateTime),
-             Temp          = as.numeric(as.character(`Temp (°C)`)),
-             Rel.Humid     = as.numeric(as.character(`Rel Hum (%)`)),
-             WindSpeed.kmh = as.numeric(as.character(`Wind Spd (km/h)`)),
-             Baro.kPa      = as.numeric(as.character(`Stn Press (kPa)`))) %>%
-      select(StationName = "Station Name", Date, Temp, Rel.Humid, WindSpeed.kmh, Baro.kPa, Weather)
-    
+             Temp          = as.numeric(as.character(Temp)),
+             Rel.Humid     = as.numeric(as.character(Rel.Humid)),
+             WindSpeed.kmh = as.numeric(as.character(WindSpeed.kmh)),
+             Baro.kPa      = as.numeric(as.character(Baro.kPa))) 
+
     wx.hr.summary <- wx.hr.data %>%
                       group_by(StationName,Date) %>%
                       summarize(Temp_Avg          = mean(Temp, na.rm = TRUE),

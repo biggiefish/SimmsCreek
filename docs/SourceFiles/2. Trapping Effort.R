@@ -1,6 +1,13 @@
-# 2. Trapping Effort xxx ----
+##____________________________________________________________________________________________________________________________----
+# 2. Trapping Effort ----
+## 
 
-## Load data 
+## - Effort Table - shows start and end dates of spring and fall sampling, plus total number of sampling days per season.
+## - Effort Plot - shows proportion of years each day was sampled.
+
+##___________________________________________________________________________________________________________________________----
+
+## Confirm data is loaded 
 ifelse(exists('data_all') && is.data.frame(get('data_all')), 
        " ", 
        source("SourceFiles/1. Load and Prep Data.R"))
@@ -70,3 +77,4 @@ trap_effort_plot_fall <- ggplot(trap_plot[trap_plot$Period=="Fall",]) +
                                          date_labels = "%b-%d") +
                             # facet_grid(.~Period, scale = "free_x") +
                             theme_bw()
+    

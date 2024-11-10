@@ -1,6 +1,14 @@
+##____________________________________________________________________________________________________________________________----
 # 3. Stream Conditions ----
+#
+# - Conditions Tables (long and wide format) - show mean +/- SD of AT, WT, pH, DO, TDS and Stage Level per season.
+# - Conditions Plot - Mean annual conditions during spring and fall sampling (faceted by parameter). 
+# - WQ Guidelines Table - Critical thresholds from WQ guidelines for each parameter. 
+#
+##____________________________________________________________________________________________________________________________----
 
-## Load data 
+
+## Confirm data is loaded 
 ifelse(exists('data_all') && is.data.frame(get('data_all')), 
        " ", 
        source("SourceFiles/1. Load and Prep Data.R"))
@@ -9,9 +17,11 @@ library(rMR)
 # https://search.r-project.org/CRAN/refmans/rMR/html/DO.unit.convert.html
 # convert DO % Sat to mg/L
 
+
 # Prepare Conditions Data ----
 cond_dat <- left_join(data_all, wx.hr.summary, by = "Date")
-colnames(cond_dat)
+
+## * Table 1. Condition Summary ----
 cond_data <- cond_dat %>% 
              group_by(Year,Period, Date)%>%
                 ## Check for DO values >20. If DO >20, convert to mg/L (from % Saturation)
@@ -38,7 +48,7 @@ cond_data <- cond_dat %>%
                           Gauge_SD       = sd(Gauge, na.rm = TRUE)) %>%
                 filter(!is.na(Period))
 
-        ## * * Wide Format ----
+        ## * * Table 2. Condition Summary (Wide Format) ----
         cond_data_wide <- cond_data %>%
                           pivot_wider(names_from = Period, 
                                       values_from = c(Air.Temp_Avg, Air.Temp_SD, 
@@ -61,9 +71,10 @@ cond_data <- cond_dat %>%
                                  TDS_Avg_Fall, TDS_SD_Fall, 
                                  Gauge_Avg_Fall, Gauge_SD_Fall)
         
-        ## * * Long Format ----
+        
         param_names <- c("Air Temp. (\u00B0C)", "Water Temp. (\u00B0C)","pH","DO (mg/L or % Sat.)","TDS (ppm)","Stage Level (m)")
         
+        ## * * Table 3. Conditions Summary (Long Format) ----
         cond_data_long <- cond_data %>% 
                           select(Year, Period, Air.Temp_Avg, Water.Temp_Avg,pH_Avg,DO_Avg, TDS_Avg, Gauge_Avg) %>%
                           pivot_longer(c(Air.Temp_Avg, Water.Temp_Avg,pH_Avg,DO_Avg, TDS_Avg, Gauge_Avg), 
@@ -82,11 +93,9 @@ cond_data <- cond_dat %>%
                                                                                   "DO \n(mg/L or % Sat.)",
                                                                                   "TDS \n(ppm)",
                                                                                   "Water Level \n(m)")))
-                                 
-        
-summary(cond_data_long$value[cond_data_long$Paremeter=="DO"])
 
-# Conditions Plot ----
+## Prepare Figures ----
+# * Figure 1. Conditions Plot ----
 cond_plot <- ggplot(cond_data_long, 
                     aes(x = Year, y = value, 
                         color = Period)) +
@@ -103,7 +112,7 @@ cond_plot <- ggplot(cond_data_long,
                     legend.position = "bottom") 
 
 
-### Water Quality Guidelines ----
+# Water Quality Guidelines ----
 #BC WQ Guidlines 
 #  - https://www2.gov.bc.ca/assets/gov/environment/air-land-water/water/waterquality/water-quality-guidelines/approved-wqgs/wqg_summary_aquaticlife_wildlife_agri.pdf
 # Levy et al. 1993
@@ -111,6 +120,7 @@ cond_plot <- ggplot(cond_data_long,
 # Carter 2005
 #  - https://www.noaa.gov/sites/default/files/legacy/document/2020/Oct/07354626438.pdf 
 
+## * Table 4. Water Quality Guidelines ----
 WQ_Guidelines <- data.frame(pH_val = c("<6.5",
                                        "6.5 to 8.5",
                                        ">9.0"),

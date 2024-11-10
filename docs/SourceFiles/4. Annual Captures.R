@@ -1,7 +1,32 @@
-# 4. Annual Captures  ----
+##____________________________________________________________________________________________________________________________----
+# 4. Fish Captures  ----
 
-## Load Data
-    ## All Data
+# Number and size of fish caught each year and season, in different formats
+
+## Annual Capture Summaries
+#   - Table 1. Annual Catches - number and size of all species captured per year/season.  
+#   - Table 2. Annual Catches (CO and CT only)
+#   - Table 3. Annual Catches (CO CT, wide format)
+#
+#
+## Seasonal Capture Summaries
+#   - Table 4. Annual Spring Catches of CO and CT (total number, date range and size range)
+#   - Table 5  Annual Fall Catches of CO CT(total number, date range and size range)
+#   - Table 6. Seasonal Coho Catches (total number, date range and size range)
+#   - Table 7. Seasonal CT Catches (total number, date range and size range)
+#   - Table 8. All Seasons Catch (Kable Format: Start and End date of each season, date and size range of CO and CT)
+#   - Table 9. Spring Catch (Kable Format: Start and End date of each season, date and size range of CO and CT)
+#   - Table 10. Spring - days to first/last catch
+#   - Table 11. Fall Catch (Kable Format: Start and End date of each season, date and size range of CO and CT)
+#
+## Plots
+#   - Figure 1. Annual Catch Line Plot  (CO CT) - Line Plot - # CT and CO caught during each season.
+#   - Figure 2. Spring Catch Plot - Bar Plot - Total captures per year, faceted by spp.
+#   - Figure 3. Fall Catch Plot - Bar Plot - Total captures per year, faceted by spp.
+##____________________________________________________________________________________________________________________________----
+
+
+## Confirm data is loaded 
     ifelse(exists('data_all') && is.data.frame(get('data_all')), 
            " ", 
            source("SourceFiles/1. Load and Prep Data.R"))
@@ -12,76 +37,84 @@
            source("SourceFiles/2. Trapping Effort.R"))
 
 # Annual Catches ----
-# * Annual Catches (All Species) ---- 
-catch_annual_all_species <- data_all %>%  
-                        # filter(Species %in% c("CT","CO")) %>%
-                        group_by(Year, Period, Species) %>%
-                        summarize(n = n(),
-                                  n = coalesce(n,0),
-                                  Date_min = min(Date, na.rm=T),
-                                  Date_med = median(Date, na.rm=T),
-                                  Date_max = max(Date, na.rm=T),
-                                  FL_mean  = mean(Length, na.rm = T),
-                                  FL_SD    = sd(Length, na.rm = T)) %>%
-                        filter(!is.na(Species))
-    
-# * Annual Catches (CO CT) -----    
-catch_annual_table <- catch_annual_all_species %>%
-                      filter(Species %in% c("CT","CO"))
-
-      ## * * Annual Catches (CO CT) - Wide ----
-      catch_annual_table_wide <- catch_annual_table %>%
-                            pivot_wider(names_from = Period,
-                                        values_from = c(n, Date_min,Date_med, Date_max, FL_mean,FL_SD)) %>%
-                            select(Year, Species, 
-                                   n_Spring, Date_min_Spring, Date_med_Spring, 
-                                   Date_max_Spring, FL_mean_Spring, FL_SD_Spring,
-                                   n_Fall, Date_min_Fall, Date_med_Fall, 
-                                   Date_max_Fall, FL_mean_Fall, FL_SD_Fall) 
-    
-
+    # * Table 1. Annual Catches (All Species) ---- 
+    catch_annual_all_species <- data_all %>%  
+                            # filter(Species %in% c("CT","CO")) %>%
+                            group_by(Year, Period, Species) %>%
+                            summarize(n = n(),
+                                      n = coalesce(n,0),
+                                      Date_min = min(Date, na.rm=T),
+                                      Date_med = median(Date, na.rm=T),
+                                      Date_max = max(Date, na.rm=T),
+                                      FL_mean  = mean(Length, na.rm = T),
+                                      FL_SD    = sd(Length, na.rm = T),
+                                      FL_max   = max(Length, na.rm = T)) %>%
+                            filter(!is.na(Species))
         
+        
+    # * Table 2. Annual Catches (CO CT) -----    
+    catch_annual_table <- catch_annual_all_species %>%
+                          filter(Species %in% c("CT","CO"))
+    
+      ## * * Table 3. Annual Catches (CO CT) - Wide ----
+          ## Prep Data
+          catch_annual_table_wide <- catch_annual_table %>%
+                                pivot_wider(names_from = Period,
+                                            values_from = c(n, Date_min,Date_med, Date_max, FL_mean,FL_SD, FL_max)) %>%
+                                select(Year, Species, 
+                                       n_Spring, Date_min_Spring, Date_med_Spring, 
+                                       Date_max_Spring, FL_mean_Spring, FL_SD_Spring, FL_max_Spring,
+                                       n_Fall, Date_min_Fall, Date_med_Fall, 
+                                       Date_max_Fall, FL_mean_Fall, FL_SD_Fall, FL_max_Fall) 
+
 # Seasonal Catches ----
-    
-    ## Prep Data
-    spp <- c("CO", "CT")
-    # for loop to summarize CO and CT catch data 
-    for(i in spp){
-      
-      x <- data_all %>%  
-        filter(Species == i) %>%
-        group_by(Year, Period, Species) %>%
-        summarize(n = n(),
-                  n = coalesce(n,0),
-                  Date_min = min(Date, na.rm=T),
-                  Date_med = median(Date, na.rm=T),
-                  Date_max = max(Date, na.rm=T),
-                  FL_mean = mean(Length, na.rm = T),
-                  FL_min  = min(Length, na.rm = T),
-                  FL_max  = max(Length, na.rm = T),
-                  FL_SD   = sd(Length, na.rm = T))
-      
-      ## Create DF's named "catch_CT" and "catch_CO"
-      assign(paste0("catch_", i, sep = ""), x)
-    }
-    
-     trap_effort2 <- trap_effort %>% 
+    ## * Seasonal Summary (CO and CT) ----
+            ## * * Table 4. Spring Catch Table (CO CT) ----
+            catch_annual_table_wide.spring <- catch_annual_table_wide %>% select(1:9)
+        
+            ## * * Table 5. Fall Catch Table (CO CT) ----
+            catch_annual_table_wide.fall <- catch_annual_table_wide %>% select(1:2, 10:16)
+            
+        
+    ## Seasonal Summary by Spp ----
+
+            # for loop to summarize CO and CT catch data 
+            for(i in spp){
+              
+              x <- data_all %>%  
+                filter(Species == i) %>%
+                group_by(Year, Period, Species) %>%
+                summarize(n = n(),
+                          n = coalesce(n,0),
+                          Date_min = min(Date, na.rm=T),
+                          Date_med = median(Date, na.rm=T),
+                          Date_max = max(Date, na.rm=T),
+                          FL_min  = min(Length, na.rm = T),
+                          FL_max  = max(Length, na.rm = T),
+                          FL_mean = mean(Length, na.rm = T),
+                          FL_SD   = sd(Length, na.rm = T))
+              
+              ## Create DF's named "catch_CT" and "catch_CO"
+              assign(paste0("catch_", i, sep = ""), x)
+            }
+            
+            ## View Outputs
+                ## * * Table 6. Summary of Coho ----
+                catch_CO
+                
+                ## * * Table 7. Summary of CT ----
+                catch_CT
+            
+      ## Prep Trap Effort Data    
+      trap_effort2 <- trap_effort %>% 
                      mutate(start = as.Date(start, "%b-%d"),
                             end = as.Date(end,"%b-%d"))
-## * * Total Seasonal Catches All Species 
-     catch_seasonal_all_species <- catch_annual_all_species %>%
-                                   group_by(Period,Species) %>%
-                                   summarise(Catch.Total = sum(n),
-                                             Catch.Avg   = mean(n),
-                                             Catch.SD    = sd(n),
-                                             Years       = n()) %>%
-                                   mutate(Years.Perc  = ifelse(Period == "Spring", 
-                                                               Years/max(Years[Period=="Spring"]),
-                                                               Years/max(Years[Period=="Fall"])))
+        
+
            
     
-## * * All Seasons Catch Table ----
-catch_annual.Table.all.seasons <- left_join(trap_effort2, catch_CT, 
+## * Table 8. All Seasons Catch Kable ----
+catch_annual.kable.all.seasons <- left_join(trap_effort2, catch_CT, 
                                             by = c("Year", "Period"), 
                                             suffix = c("","_CT")) %>%
                                   left_join(.,catch_CO, 
@@ -101,14 +134,14 @@ catch_annual.Table.all.seasons <- left_join(trap_effort2, catch_CT,
                                          Date_minCO = format(Date_minCO, "%b-%d"),
                                          Date_maxCO = format(Date_maxCO, "%b-%d")) %>%
                                   mutate_at(vars(nCT,nCO), ~replace_na(.,0))
+      
 
-## * * Spring Catch Table ----
-catch_annual.Table.Spring <- catch_annual.Table.all.seasons %>% 
+## * Table 9. Spring Catch Kable ----
+catch_annual.Table.Spring <- catch_annual.kable.all.seasons %>% 
                               filter(Period == "Spring") %>%
                               select(!Period)
      
-     colnames(catch_annual.Table.Spring)
-     str(catch_annual.Table.Spring)
+     ## * Table 10. Spring - days to first/last catch -----
      catch_annual.Table.Spring.calcs  <- catch_annual.Table.Spring %>%
                                               summarise(CT_days.after.start = as.numeric(as.Date(Date_minCT, format = "%b-%d") - as.Date(start, format = "%b-%d")),
                                                      CT_days.before.end  = as.numeric(as.Date(Date_maxCT, format = "%b-%d") - as.Date(end, format = "%b-%d")),
@@ -126,15 +159,16 @@ catch_annual.Table.Spring <- catch_annual.Table.all.seasons %>%
                                                                    CT_days.before.end= sd(CT_days.before.end),
                                                                    CO_days.after.start= sd(CO_days.after.start),
                                                                    CO_days.before.end= sd(CO_days.before.end)))
+     
      length(catch_annual.Table.Spring.calcs$CT_days.before.end[catch_annual.Table.Spring.calcs$CT_days.before.end==0])
 
-## * * Fall Catch Table ----
-catch_annual.Table.Fall <- catch_annual.Table.all.seasons %>% 
+## * Table 11. Fall Catch Kable  ----
+catch_annual.Table.Fall <- catch_annual.kable.all.seasons %>% 
                             filter(Period == "Fall") %>%
                             select(!Period)
 
 # Catch Plots ----
-## * Annual Catch Line Plot  (CO CT) ----
+## * Figure 1. Annual Catch Line Plot  (CO CT) ----
      catch_annual.lineplot <-   ggplot(catch_annual_table, 
                                        aes(x =Year, y = n,color = Species)) +
                                        geom_point()+
@@ -144,13 +178,10 @@ catch_annual.Table.Fall <- catch_annual.Table.all.seasons %>%
                                        theme_bw() +
                                        theme(legend.position = "bottom")     
      
-# * Total Catch Bar Plot ----
-    ## Prepare data
-        ## Define Capture Periods
-        sample_period <- c("Spring", "Fall")
-    
-        ## Create empty list to save plots to
-        catch_plots <- list()
+# Total Catch Bar Plots ----
+  ## Prepare data
+    ## Create empty list to save plots to
+    catch_plots <- list()
 
     ## Run for loop      
     for(i in sample_period){
@@ -178,10 +209,10 @@ catch_annual.Table.Fall <- catch_annual.Table.all.seasons %>%
       
     }
 
-## * * Annual Spring Catch Plot ----
+## * * Figure 2. Annual Spring Catch Bar Plot ----
        catch_annual_barPlot.Spring <- catch_plots[[1]]
 
-## * * Annual Fall Catch Plot ----
+## * * Figure 3. Annual Fall Catch Bar Plot ----
         catch_annual_barPlot.Fall   <- catch_plots[[2]]
 
 

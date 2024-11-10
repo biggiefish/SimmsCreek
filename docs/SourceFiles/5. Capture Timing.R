@@ -1,7 +1,30 @@
+##____________________________________________________________________________________________________________________________----
 # 5. Capture Timing  ----
+#
+# When did fish pass the fence? 
+#
+#   - Table 1. Spring Passage Dates (Date of first and last pass, 
+#                                    difference from overall mean first/last pass dates, 
+#                                    days after trap start that fish was first caught)
+#   - Table 2. Fall Passage Dates (see above, but for fall)
+#   - Table 3. Spring Peak Passage Dates (date of peak passage, difference from mean peak passage date (per spp))
+#   - Table 4. Fall Peak Passage Dates (date of peak passage, difference from mean peak passage date (per spp))
+#
+#   - Figure 1. Spring CT Timing Plot (Total daily catch, faceted by year)
+#   - Figure 2. Spring CO Timing Plot (Total daily catch, faceted by year)
+#   - Figure 3. Fall CT Timing Plot (Total daily catch, faceted by year)
+#   - Figure 4. Fall CO Timing Plot (Total daily catch, faceted by year)
+#   - Figure 5. Date of 50% Passage - Spring (Frequency of 50% passage date, faceted by spp)
+#   - Figure 6. Date of 50% Passage - Fall (Frequency of 50% passage date, faceted by spp)
+#   - Figure 7. Date of Peak Passage - Spring (Frequency of 50% passage date, faceted by spp)
+#   - Figure 8. Date of Peak Passage - Fall (Frequency of 50% passage date, faceted by spp)
+#   - Figure 9. Stacked daily catch plot - Spring CT - (Stacked total daily catch, colored by year) 
+#   - Figure 10. Stacked daily catch plot - Spring CO - (Stacked total daily catch, colored by year) 
+#   - Figure 11. Stacked daily catch plot - Fall CT - (Stacked total daily catch, colored by year) 
+#   - Figure 12. Stacked daily catch plot - Fall CO - (Stacked total daily catch, colored by year) 
+##____________________________________________________________________________________________________________________________----
 
-## Load Data
-    ## All Data
+## Confirm data is loaded 
     ifelse(exists('data_all') && is.data.frame(get('data_all')), 
            " ", 
            source("SourceFiles/1. Load and Prep Data.R"))
@@ -37,13 +60,17 @@
                         group_by(Period,Species) %>%
                         mutate(Mean_daysAfterStart = mean(days_after_start, na.rm = TRUE),
                                SD_daysAfterStart   = sd(days_after_start, na.rm = TRUE),
-                               first_day           = sum(days_after_start == 0))
-
+                               ## first_day = # seasons where fish were caught on first day of trapping
+                               first_day           = sum(days_after_start == 0))   
+    
+    ### * * Table 1. Spring Passage Summary ----
     pass.period.spring <- pass.period %>% filter(Period == "Spring")
     
+    ### * * Table 2. Fall Passage Summary ----
     pass.period.fall <- pass.period %>% filter(Period == "Fall")
    
-## * Date of 50% Passage ----
+## Date of 50% Passage ----
+    ## Daily proportion of total catch during each year and season
     catch_prop <- data_all %>% 
                       filter(Species %in% c("CO","CT"),
                              complete.cases(Species)) %>%
@@ -60,9 +87,13 @@
                       mutate(Decade = floor_decade(as.numeric(Year))) %>%
                               select(Species, Period, Year, date.std, everything())
     
+            ## Spring - Daily Proportion of Total Catch 
             catch_prop.spring <- catch_prop %>% filter(Period == "Spring")
-            catch_prop.fall <- catch_prop %>% filter(Period == "Fall")
             
+            ## Fall - Daily Proportion of Total Catch 
+            catch_prop.fall <- catch_prop %>% filter(Period == "Fall")
+     
+    ## Calculate Date of 50% Passage              
     catch50prop <- catch_prop %>% 
                       mutate(dif = abs(prop-0.5)) %>%
                       group_by(Species, Period, Year) %>%
@@ -74,9 +105,10 @@
                              Date50pDiff = difftime(meanDate50p, date.50p,"units" = c("days")))
     
 
-    
+    ## * Table 1. Date when 50% of run had passed fence each spring ---- 
     catch50prop.spring <- catch50prop %>% filter(Period == "Spring")
     
+    ## * Table 2. Date when 50% of run had passed fence each fall ---- 
     catch50prop.fall <- catch50prop %>% filter(Period == "Fall")
     
 ## Date of Peak Migration ---- 
@@ -93,12 +125,30 @@
                           rename(PeakCatch = "catch") %>%
                           ungroup() %>%
                           group_by(Period,Species) %>%
-                          mutate(MeanPeak  = round_date(mean(date.std),"day"),
-                                 MeanDiff = difftime(MeanPeak, date.std, "units" = c("days")))
-                          
-    catch_peak.spring <- catch_peak %>% filter(Period == "Spring")
+                          mutate(MeanPeak  = round_date(mean(date.std, na.rm = TRUE),"day"),
+                                 MeanDiff = difftime(MeanPeak, date.std, "units" = c("days"))) %>%
+                          filter(Species %in% c("CO","CT")) %>%
+                          ungroup()
     
-    catch_peak.fall <- catch_peak %>% filter(Period == "Fall")
+    unique(catch_peak$Species)
+    str(catch_peak)
+    
+    ## * Table 3. Spring Peak Migration Dates ----                    
+    catch_peak.spring <- catch_peak %>% 
+                            filter(Period == "Spring") %>% 
+                            pivot_wider(names_from = "Species", 
+                                        values_from = c("PeakCatch","date.std", "MeanPeak", "MeanDiff")) %>%
+                            select(1:3, PeakCatch_CT, date.std_CT, MeanPeak_CT, MeanDiff_CT,
+                                        PeakCatch_CO, date.std_CO, MeanPeak_CO, MeanDiff_CO)
+    
+    ## * Table 4. Spring Peak Migration Dates ----                      
+    catch_peak.fall <- catch_peak %>% 
+                            filter(Period == "Fall") %>%
+                            pivot_wider(names_from = "Species", 
+                                        values_from = c("PeakCatch","date.std", "MeanPeak",MeanDiff)) %>%
+                            select(1:3, PeakCatch_CT, date.std_CT, MeanPeak_CT, MeanDiff_CT,
+                                   PeakCatch_CO, date.std_CO, MeanPeak_CO, MeanDiff_CO)
+                    
     
 ## Plots ----
 ## Daily Captures ----
@@ -126,10 +176,8 @@
        daily_catch_summary_plot <- list()
        
     ## Prep For Loop Variables
-        sample_period <- c("Spring","Fall")
-        spp <- c("CO","CT")
 
-      ## Run for loops      
+             ## Run for loops      
       for(i in sample_period){
         for(j in spp){
           
@@ -203,7 +251,7 @@
                 }
       }
 
-    ## * * Spring CT Timing Plot ----
+    ## * * Figure 1. Spring CT Timing Plot ----
     daily_catch_plot.Spring.CT <- daily_catch_plot[[1]][[2]] +
                                       geom_label(data = labels, 
                                                  aes(label = YYYEAR),
@@ -212,7 +260,7 @@
                                                  hjust = "left", vjust = 0,
                                                  inherit.aes = FALSE)
     
-    ## * * Spring CO Timing Plot ----
+    ## * * Figure 2. Spring CO Timing Plot ----
     daily_catch_plot.Spring.CO <- daily_catch_plot[[1]][[1]] +
                                       geom_label(data = labels, 
                                                  aes(label = YYYEAR),
@@ -221,7 +269,7 @@
                                                  hjust = "left", vjust = 0,
                                                  inherit.aes = FALSE) 
     
-    ## * * Fall CT Timing Plot ----
+    ## * * Figure 3. Fall CT Timing Plot ----
     daily_catch_plot.Fall.CT <- daily_catch_plot[[2]][[2]] +
                                     geom_label(data = fall.labels, 
                                                aes(label = YYYEAR),
@@ -235,7 +283,7 @@
                                                        sec.axis = sec_axis(~./10, 
                                                        name = "Proportion of Total Catch (%)"))   
     
-    ## * * Fall CO Timing Plot ----
+    ## * * Figure 4. Fall CO Timing Plot ----
     daily_catch_plot.Fall.CO <- daily_catch_plot[[2]][[1]] +
                                     geom_label(data = labels, 
                                                aes(label = YYYEAR),
@@ -245,21 +293,16 @@
                                                vjust = 0,
                                                inherit.aes = FALSE)
         
-## Daily Summary Plot ----
-  daily_catch_summary_plot.Spring.CT <- daily_catch_summary_plot[[1]][[2]]
-  daily_catch_summary_plot.Spring.CO <- daily_catch_summary_plot[[1]][[1]] 
-  daily_catch_summary_plot.Fall.CT <- daily_catch_summary_plot[[2]][[2]]
-  daily_catch_summary_plot.Fall.CO <- daily_catch_summary_plot[[2]][[1]]
-  
-  
-## Date of 50% Passage Plot  
+## Date of 50% Passage Plot ----
+  ## * * Figure 5. Date of 50% Passage - Spring ----
   DateHalfPassed.plot.spring <- ggplot(catch50prop.spring) +
-                              geom_histogram(aes(x =date.50p)) + 
-                              labs(x = "", y = "Frequency") +
-                              scale_y_continuous(breaks = seq(0,3,1)) +
-                              theme_bw() +
-                              facet_grid(Species ~.)
-  
+                                    geom_histogram(aes(x =date.50p)) + 
+                                    labs(x = "", y = "Frequency") +
+                                    scale_y_continuous(breaks = seq(0,3,1)) +
+                                    theme_bw() +
+                                    facet_grid(Species ~.)
+        
+  ## * * Figure 6. Date of 50% Passage - Fall ----
   DateHalfPassed.plot.fall <- ggplot(catch50prop.fall) +
                               geom_histogram(aes(x =date.50p)) + 
                               labs(x = "", y = "Frequency") +
@@ -268,19 +311,41 @@
                               facet_grid(Species ~.)
   
 ## Peak Catch Timing Plots ----
-  Catch_Peak_Plot.Spring <- ggplot(catch_peak.spring) + 
-                                  geom_histogram(aes(x =date.std)) + 
+  ## * * Figure 7. Date of Peak Passage - Spring ----
+  Catch_Peak_Plot.Spring <- catch_peak %>%
+                              filter(Period == "Spring") %>%
+         
+                              ggplot(.) + 
+                              geom_histogram(aes(x =date.std)) + 
                                   labs(x = "", y = "Frequency") +
                                   scale_y_continuous(breaks = seq(0,2,1)) +
                                   theme_bw() +
                                   facet_grid(Species ~.)
-  
-  Catch_Peak_Plot.Fall <- ggplot(catch_peak.fall) + 
-                                  geom_histogram(aes(x =date.std)) + 
+        
+  ## * * Figure 8. Date of Peak Passage - Fall ----
+  Catch_Peak_Plot.Fall <- catch_peak %>%
+                             filter(Period == "Fall") %>%
+                             
+                             ggplot(.) + 
+                             geom_histogram(aes(x =date.std_CO)) + 
                                   labs(x = "", y = "Frequency") +
                                   # scale_y_continuous(breaks = seq(0,2,1)) +
                                   theme_bw() +
                                   facet_grid(Species ~.) 
+  
+  
+## Daily Summary Plot ----
+  ## * * Figure 9 - Daily Catch Plot - Spring CT
+  daily_catch_summary_plot.Spring.CT <- daily_catch_summary_plot[[1]][[2]]
+        
+  ## * * Figure 10 - Daily Catch Plot - Spring CO        
+  daily_catch_summary_plot.Spring.CO <- daily_catch_summary_plot[[1]][[1]] 
+  
+  ## * * Figure 11 - Daily Catch Plot - Fall CT
+  daily_catch_summary_plot.Fall.CT <- daily_catch_summary_plot[[2]][[2]]
+  
+  ## * * Figure 12 - Daily Catch Plot - Fall CO
+  daily_catch_summary_plot.Fall.CO <- daily_catch_summary_plot[[2]][[1]]
   
         
         
