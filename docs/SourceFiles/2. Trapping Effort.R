@@ -20,18 +20,50 @@ covid <- data.frame(Year = c(2020, 2021, 2023),
                     binary = c(0,0,0))
 
 ## Start and End of Each Trapping Period  
-    trap_effort <- data_all %>% 
+    trap_effort1 <- data_all %>% 
                       group_by(Year, Period, Date) %>%
                       summarize(binary = 1) %>%
                       ungroup() %>%
                       rbind(covid) %>%
                       group_by(Year, Period) %>%
                       summarize(trap_days = sum(binary),
-                                start = format(min(Date), "%b-%d"),
-                                end   = format(max(Date),"%b-%d")) %>%
+                                start = min(Date),
+                                end = max(Date)) %>%
+                                # start = format(min(Date), "%b-%d"),
+                                # end   = format(max(Date),"%b-%d"))
                       filter(complete.cases(Period))
+    
+    trap_effort <- data_all %>% 
+                        group_by(Year, Period, Date) %>%
+                        summarize(binary = 1) %>%
+                        ungroup() %>%
+                        rbind(covid) %>%
+                        group_by(Year, Period) %>%
+                        summarize(trap_days = sum(binary),
+                                  start = format(min(Date), "%b-%d"),
+                                  end   = format(max(Date),"%b-%d")) %>%
+                        filter(complete.cases(Period))
 
-## Effort Table ----     
+## Effort Table ----
+    trap_effort_summary_table <- trap_effort1 %>%
+                                    filter(Period %in% c("Spring","Fall")) %>%
+                                    group_by(Period) %>%
+                                    mutate(start.std = case_when(year(start) >= 0 ~ 'year<-'(start, 2024)),
+                                           end.std   = case_when(year(end) >= 0 ~ 'year<-'(end, 2024))) %>%
+                                    summarise(Days_min = min(trap_days, na.rm = TRUE),
+                                              Days_max = max(trap_days, na.rm = TRUE),
+                                              Days_avg = mean(trap_days, na.rm = TRUE),
+                                              Days_sd  = sd(trap_days, na.rm = TRUE),
+                                              Start_min = format(min(start.std, na.rm = TRUE), "%d-%b"),
+                                              Start_max = format(max(start.std, na.rm = TRUE), "%d-%b"),
+                                              Start_avg = format(mean(start.std, na.rm = TRUE), "%d-%b"),
+                                              Start_sd  = sd(start.std, na.rm = TRUE),
+                                              End_min = format(min(end.std, na.rm = TRUE), "%d-%b"),
+                                              End_max = format(max(end.std, na.rm = TRUE), "%d-%b"),
+                                              End_avg = format(mean(end.std, na.rm = TRUE), "%d-%b"),
+                                              End_sd  = sd(end.std, na.rm = TRUE))
+    
+    
     trap_effort_table <- trap_effort %>%
                           pivot_wider(names_from = Period, 
                                       values_from = c(trap_days, start, end)) %>%

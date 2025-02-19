@@ -279,7 +279,7 @@
                                                vjust = 0,
                                                inherit.aes = FALSE) +
                                     scale_y_continuous("Total Captures (# of Fish)",
-                                                       breaks = seq(0,10,5),
+                                                       # breaks = seq(0,10,5),
                                                        sec.axis = sec_axis(~./10, 
                                                        name = "Proportion of Total Catch (%)"))   
     
@@ -312,26 +312,48 @@
   
 ## Peak Catch Timing Plots ----
   ## * * Figure 7. Date of Peak Passage - Spring ----
-  Catch_Peak_Plot.Spring <- catch_peak %>%
-                              filter(Period == "Spring") %>%
+       period <- c("Spring","Fall")
+       peak.plot <- list()
+       
+       for(i in spp){
+         for(j in period){
          
-                              ggplot(.) + 
-                              geom_histogram(aes(x =date.std)) + 
-                                  labs(x = "", y = "Frequency") +
-                                  scale_y_continuous(breaks = seq(0,2,1)) +
-                                  theme_bw() +
-                                  facet_grid(Species ~.)
+            xx <-  catch_peak %>%
+                        filter(Species == i,
+                               Period == j)
+             
+                        t.plot  <- ggplot(xx) + 
+                                   geom_histogram(aes(x =date.std)) + 
+                                                labs(x = "", y = "Frequency") +
+                                                scale_y_continuous(breaks = seq(0,2,1)) +
+                                                theme_bw()
+                        
+                        peak.plot[[i]][[j]] <- t.plot
+         }
+       }
+        ## Frequency of Peak Spring Coho Outmigration            
+        CO.peak.spring.plot <- peak.plot[[1]][[1]]
+        
+        ## Frequency of Peak Fall Coho In migration            
+        CO.peak.fall.plot <- peak.plot[[1]][[2]]
+        
+        ## Frequency of Peak Spring CT Outmigration 
+        CT.peak.spring.plot <- peak.plot[[2]][[1]]
+        
+        ## Frequency of Peak Fall CT Outmigration 
+        CT.peak.fall.plot <- peak.plot[[2]][[2]]
+      
         
   ## * * Figure 8. Date of Peak Passage - Fall ----
   Catch_Peak_Plot.Fall <- catch_peak %>%
                              filter(Period == "Fall") %>%
                              
-                             ggplot(.) + 
-                             geom_histogram(aes(x =date.std_CO)) + 
+                             ggplot(., aes(x = Year, y = PeakCatch)) + 
+                                  
                                   labs(x = "", y = "Frequency") +
                                   # scale_y_continuous(breaks = seq(0,2,1)) +
                                   theme_bw() +
-                                  facet_grid(Species ~.) 
+                                  facet_grid(Species ~., scales = "free_y") 
   
   
 ## Daily Summary Plot ----
@@ -346,6 +368,104 @@
   
   ## * * Figure 12 - Daily Catch Plot - Fall CO
   daily_catch_summary_plot.Fall.CO <- daily_catch_summary_plot[[2]][[1]]
+  
+  
+## Capture Timing Boxplot ----
+  bx.dat <- data_all %>%
+                filter(Species %in% c("CO","CT"))
+  
+boxplots.summary <- list()
+
+      for(i in sample_period){
+        
+            ## Prep Data
+            bx <- bx.dat %>%
+                    filter(Period == i)
+            
+            bxplot.sm <- ggplot(bx, aes(x = Species,
+                                        y = date.std)) +
+                            geom_boxplot(alpha = 0.8, show.legend = FALSE) +
+                            geom_point(aes(color = as.factor(Year)),
+                                       shape = 1,
+                                       alpha = 0.2,
+                                       position = position_jitter()) +
+                            labs(x = "", y = "") +
+                            coord_flip() +
+                            theme_bw() +
+                            theme(legend.title = element_blank(),
+                                  legend.position = "bottom",
+                                  legend.key.width = unit(2, "cm"),
+                                  legend.key.height = unit(0.1,"cm")) +
+                            guides(color = guide_legend(override.aes = list(alpha = 1), 
+                                                        nrow = 2))
+            
+            boxplots.summary[[i]] <- bxplot.sm
+      }
+
+  Spring.Boxplot.Summary <- boxplots.summary[[1]]
+  Fall.Boxplot.Summary <- boxplots.summary[[2]]
+      
+  ## Plot of Median Date Across Years
+  boxplots.years <-list()
+  for(j in spp){
+    for(i in sample_period){
+              
+    bx <- bx.dat %>%
+            filter(Period == i,
+                   Species == j)
+
+      bxplot <- ggplot(bx, aes(x = as.factor(Year), 
+                                                y = date.std, 
+                                                color = Species)) +
+      geom_boxplot(alpha = 0.8) +
+      geom_point(aes(color = Species),
+                 shape = 1,
+                 alpha = 0.2,
+                 position = position_jitterdodge()) +
+      geom_hline(aes(linetype = "Mean", yintercept = ifelse(Period == "Spring",ifelse(Species == "CO",as.Date("2024-05-15"),as.Date("2024-05-11")),
+                                                  ifelse(Species =="CO",as.Date("2024-10-31"),as.Date("2024-11-02")))))+  
+      scale_linetype_manual(values = "dashed") +
+      labs(x = "", y = "Date") +
+      # coord_flip() +
+      guides(linetype = guide_legend(title = element_blank()))+  
+      theme_bw()
+    
+    boxplots.years[[i]][[j]] <- bxplot
+    }
+  }
+  
+
+  Spring.Boxplot.Years.CO <-  boxplots.years[[1]][[1]]
+  Fall.Boxplot.Years.CO   <-  boxplots.years[[2]][[1]]
+  Spring.Boxplot.Years.CT <-  boxplots.years[[1]][[2]]
+  Fall.Boxplot.Years.CT   <-  boxplots.years[[2]][[2]]
+            
+            
+            
+## Mean Capture Timing Trends ----
+bx.spring <- bx.dat %>% 
+                filter(Period =="Spring")       
+
+      ## Plot of Mean Passage Date
+      mean.spring.trend <- ggplot(bx.spring,
+                                  aes(x = Year, 
+                                      y = date.std, 
+                                      color = Species)) + 
+                            geom_point(shape = 1,
+                                       alpha = 0.2,
+                                       position = position_jitterdodge()) +
+                            geom_smooth(method = 'loess') +
+                            scale_x_continuous(breaks = seq(2008,2024,2)) +
+                            labs(x = "", y = "") +
+                            theme_bw()
+                            
+
+
+
+  
+
+      
+  
   
         
         

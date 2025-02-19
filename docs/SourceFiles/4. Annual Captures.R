@@ -180,6 +180,15 @@ catch_annual.Table.Fall <- catch_annual.kable.all.seasons %>%
      
 # Total Catch Bar Plots ----
   ## Prepare data
+     
+     library("scales")
+     integer_breaks <- function(n = 5, ...) {
+       breaker <- pretty_breaks(n, ...)
+       function(x) {
+         breaks <- breaker(x)
+         breaks[breaks == floor(breaks)]
+       }
+     }
     ## Create empty list to save plots to
     catch_plots <- list()
 
@@ -187,21 +196,24 @@ catch_annual.Table.Fall <- catch_annual.kable.all.seasons %>%
     for(i in sample_period){
       
       ## Prepare data
-          xx <- data_all %>%
-            filter(Period == i) %>%
-            ungroup() %>%
-            group_by(Year, Period, Species) %>%
-            summarize(n = n()) %>%
-            filter(!is.na(Period),
-                   !is.na(Species), 
-                   Species %in% c("CO","CT")) 
+  catch_plot.data <- data_all %>%
+                      ungroup() %>%
+                      group_by(Year, Period, Species) %>%
+                      summarize(n = n()) %>%
+                      filter(!is.na(Period),
+                             !is.na(Species), 
+                             Species %in% c("CO","CT"))
+  
+  xx <- catch_plot.data %>% filter(Period == i)
+  
       ## Create Plot
       g <- ggplot(xx) +
               geom_col(aes(x = Year, y = n)) + 
-              facet_grid(Species~.) +
+              facet_grid(Species~., scales = "free_y") +
+              scale_x_continuous(breaks = seq(2008,2024,2)) +
+              scale_y_continuous(breaks = integer_breaks())
               labs(x = "", 
                    y= "Total Captures (# of Fish)") +
-              scale_x_continuous(breaks = seq(2008,2024,2)) +
               theme_bw()
       
       # assign name to plot 
@@ -210,10 +222,10 @@ catch_annual.Table.Fall <- catch_annual.kable.all.seasons %>%
     }
 
 ## * * Figure 2. Annual Spring Catch Bar Plot ----
-       catch_annual_barPlot.Spring <- catch_plots[[1]]
+       catch_annual_barPlot.Spring <- catch_plots[[1]] + theme_bw()
 
 ## * * Figure 3. Annual Fall Catch Bar Plot ----
-        catch_annual_barPlot.Fall   <- catch_plots[[2]]
+        catch_annual_barPlot.Fall   <- catch_plots[[2]] + theme_bw()
 
 
         

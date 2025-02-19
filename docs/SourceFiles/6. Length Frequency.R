@@ -33,8 +33,11 @@
     
         
 # Prepare Figures ----
+  ## Length Frequency of all fish
+
   # Faceted Directional Length Frequency Plots----
     ## Create empty list to save plots to 
+    length.freq.all <- list()
     length.freq.plot <- list()
     
     ## Run for loop
@@ -48,17 +51,32 @@
         fl.plot <- ggplot(length.freq) +
                       geom_histogram(aes(x = Length, fill = Direction)) + 
                       labs(x = "Fork Length (mm)", y = "Frequency (# of Fish)") +
-                      facet_grid(Year~.)+
+                      # facet_grid(Year~.)+
                       theme_bw()
 
-        length.freq.plot[[i]][[j]] <- fl.plot
+        length.freq.all[[i]][[j]] <- fl.plot
+        
+        length.freq.plot[[i]][[j]] <- fl.plot +
+                                        facet_grid(Year~.)
     
         }
     
     }
     
     ## Save Figures
-        ## * * Figure 1. Spring CO Directional Lenght.Freq. ----
+        ## * * Figure 1. Spring CO Directional Length.Freq. ----
+        LF.plot_spring.all.CO <- length.freq.all[[1]][[1]]
+        
+        ## * * Figure 2. Fall CO Directional Length.Freq. ----
+        LF.plot_fall.all.CO <- length.freq.all[[1]][[2]]
+        
+        ## * * Figure 3. Spring CT Directional Length.Freq. ----
+        LF.plot_spring.all.CT <- length.freq.all[[2]][[1]]
+        
+        ## * * Figure 4. Fall CT Directional Length.Freq. ----
+        LF.plot_fall.all.CT <- length.freq.all[[2]][[2]]
+    
+        ## * * Figure 1. Spring CO Directional Length.Freq. ----
         LF.plot_spring.CO <- length.freq.plot[[1]][[1]]
         
         ## * * Figure 2. Fall CO Directional Length.Freq. ----
@@ -70,10 +88,7 @@
         ## * * Figure 4. Fall CT Directional Length.Freq. ----
         LF.plot_fall.CT <- length.freq.plot[[2]][[2]]
         
-    
-           
-    
-    
+
 # Spring - Annual Direction Length Frequency Plot ----    
     ## Create Empty List to save plots to
     spring.lf.plot <- list()    
@@ -124,6 +139,7 @@
       
             ## * * Figure 34. Spring 2008 CT - Directional Length Freq. ---- 
               CT_2014_LF <- spring.lf.plot[[2]][[14]]
+    
     
 # Fall - Annual Direction Length Frequency Plot ----    
     ## Create Empty List to save plots to
@@ -192,4 +208,20 @@
         ## * * Figure 57. Fall 2023 CT - Directional Length Freq. ---- 
         CT_2023_LF <- fall.lf.plot[[2]][[14]]
         
-        
+## Calculate proportion of adult CCT relative to total CCT   
+CT_age <- data_all %>%
+              filter(Species == "CT") %>%
+              mutate(age.class = ifelse(Length>230, "Adult","Juvenile")) %>%
+              group_by(Year, age.class) %>%
+              summarize(n = n()) %>%
+              pivot_wider(names_from = age.class, values_from = n) %>%
+              ungroup() %>%
+              mutate(Total = Adult + Juvenile,
+                     Adult.Prop = Adult/Total,
+                     Adult.Total = sum(Adult),
+                     Juv.Prop   = Juvenile/Total,
+                     Juv.Total = sum(Juvenile))
+
+CT.AgeClass.Prop <- head(CT_age,1) %>%
+                    summarize(Adult = Adult.Total/(Juv.Total + Adult.Total),
+                              Juvenile = 1-Adult)
