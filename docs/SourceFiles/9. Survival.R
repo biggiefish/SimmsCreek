@@ -40,16 +40,16 @@ regional.dat <- data_regional %>%
                 
 ## Spring Fish data - Simms + Regional
 spring.fish.dat <- simms.dat %>%
-            filter(Period == "Spring") %>%
-            group_by(spawn.year, Species) %>%
-            # group_by(Year, Species) %>%
-            summarize(juveniles = n()) %>%
-            select(spawn.year,
-                   # out.year = Year,
-                   species = Species,
-                   juveniles) %>%
-            left_join(regional.dat, by = c("spawn.year"))
-            # left_join(regional.dat, by = c("out.year"))
+                      filter(Period == "Spring") %>%
+                      group_by(spawn.year, Species) %>%
+                      # group_by(Year, Species) %>%
+                      summarize(juveniles = n()) %>%
+                      select(spawn.year,
+                             # out.year = Year,
+                             species = Species,
+                             juveniles) %>%
+                      left_join(regional.dat, by = c("spawn.year"))
+                      # left_join(regional.dat, by = c("out.year"))
 
 ## Fall Fish Data - Simms + Regional
 fall.fish.dat <- simms.dat %>%
@@ -67,11 +67,13 @@ fall.fish.dat <- simms.dat %>%
 ## 2. Regional vs Local ----
 ## * 2.1 Regional Adult vs Juveniles Counts----
 ## * * 2.1.1 Time Series ----
-      ## * * * Adult CO vs Juv. CT over time ----
+      ## * * * Regional CO Spawners vs Juvenile CT in Simms Creek over time ----
       spring.fish.dat %>% 
                    filter(species == "CT") %>%
                    mutate(spawners = spawners/1000) %>%
                    pivot_longer(!c(spawn.year, species), names_to = "age.class", values_to = "n.fish") %>%
+                   mutate(age.class = case_when(age.class == "juveniles" ~ "Juvenile CT (Simms Ck.)",
+                                               age.class == "spawners" ~ "Spawning CO (Regionally)")) %>%
                    as.data.frame(.) %>%
                    
                    ggplot(.,aes(x = spawn.year, y = n.fish, color = age.class))+
@@ -79,14 +81,17 @@ fall.fish.dat <- simms.dat %>%
                    geom_smooth() +
                    scale_x_continuous(limits= c(2008, 2024),
                                       breaks = seq(2008,2024,2))+    
-                   labs(x = "Year", y = "# Fish (1,000's of adults)", color = "Age Class") +
-                   theme_bw()
+                   labs(x = "Year", y = "# Spawning CO (Regionally) (1,000's of Fish)", color = "Dataset") +
+                   theme_bw() +
+                   theme(legend.position = "bottom")
 
-      ## * * * Adult CO vs Juv. CO over time ----
+      ## * * * Regional CO Spawners vs Juvenile CO in Simms Creek over time ----
       spring.fish.dat %>% 
                   filter(species == "CO") %>%
                   mutate(spawners = spawners/1000) %>%
                   pivot_longer(!c(spawn.year, species), names_to = "age.class", values_to = "n.fish") %>%
+                  mutate(age.class = case_when(age.class == "juveniles" ~ "Juvenile CO (Simms Ck.)",
+                                               age.class == "spawners" ~ "Spawning CO (Regionally)")) %>%
                   as.data.frame(.) %>%
                   
                   ggplot(.,aes(x = spawn.year, y = n.fish, color = age.class))+
@@ -94,8 +99,11 @@ fall.fish.dat <- simms.dat %>%
                   geom_smooth() +
                   scale_x_continuous(limits= c(2008, 2024),
                                      breaks = seq(2008,2024,2))+
-                  labs(x = "Year", y = "# Fish (1,000's of adults)", color = "Age Class") +
-                  theme_bw()
+                  labs(x = "Year", y = "# Spawning CO (Regionally) (1,000's of Fish)", color = "Dataset") +
+                  theme_bw() +
+                  theme(legend.position = "bottom")
+
+
                    
 ## * * * Adult CO vs Adult CO ----                   
 fall.fish.dat %>% filter(species == "CO") %>%
@@ -104,6 +112,8 @@ fall.fish.dat %>% filter(species == "CO") %>%
                          "Regional" = spawners) %>%
                   mutate(Regional = Regional/1000) %>%
                   pivot_longer(!c(spawn.year, species), names_to = "age.class", values_to = "n.fish") %>%
+                  mutate(age.class = case_when(age.class == "Simms Creek" ~ "Spawning CO (Simms Ck.)",
+                                               age.class == "Regional" ~ "Spawning CO (Regionally)")) %>%
                  
                   ggplot(.,aes(x = spawn.year, y = n.fish, colour = age.class))+
                   geom_point() +
@@ -111,10 +121,11 @@ fall.fish.dat %>% filter(species == "CO") %>%
                   scale_x_continuous(limits= c(2008, 2024),
                                      breaks = seq(2008,2024,2))+
                   labs(x = "",
-                       y = "# of CO Spawners (1,000's for Regional)",
+                       y = "# Spawning CO (Regionally) (1,000's of Fish)",
                        title = "Relative number of juvenile Coho Salmon and Cutthroat Trout emigrants",
                        color = "Dataset")  +
-                  theme_bw()
+                  theme_bw()+
+                  theme(legend.position = "bottom")
                  
 ## * * 2.1.2 Relative Abundance ----
 ## * * *  Juv. CT vs adult CO ----              
@@ -123,10 +134,11 @@ spring.fish.dat %>%
                    ggplot(.,aes(x = spawners/1000, y = juveniles))+
                    geom_point()+
                    geom_smooth(method = 'lm', formula = y~x)+
-                   labs(x = "# of Adult CO Spawners (1,000's fish)", 
-                        y = "# of Juvenile CCT",
-                        title = "Adult CO relative to juvenile CCT") +
-                   theme_bw()
+                   labs(x = "# Spawning CO (Regionally) (1,000's of Fish)", 
+                        y = "# Juvenile CCT (Simms Ck.)",
+                        title = "Regional Coho Abundance relative to Juvenile CCT Abundance in Simms Creek") +
+                   theme_bw()+
+                   theme(legend.position = "bottom")
                    
 ## * * * Juv CO vs adult CO ----
 spring.fish.dat %>%
@@ -134,10 +146,23 @@ spring.fish.dat %>%
                    ggplot(., aes(x = spawners/1000, y = juveniles))+
                    geom_point()+
                    geom_smooth(method = 'lm', formula = y~x) +
-                   labs(x = "# of Adult CO Spawners (1,000's fish)", 
-                        y = "# of Juvenile CO",
-                        title = "Adult CO relative to juvenile CO") +
+                   labs(x = "# Spawning CO (Regionally) (1,000's of Fish)", 
+                        y = "# Juvenile CO (Simms Ck.)",
+                        title = "Regional Coho Abundance relative to Juvenile Coho Abundance in Simms Creek") +
                    theme_bw()
+
+spring.fish.dat %>% ggplot(., aes(x = spawners/1000, y = juveniles, color = species, group = species)) +
+                    geom_point() +
+                    geom_smooth(method = "lm", formula = y~x, alpha = 0.2) +
+                    # geom_smooth(method = "nls", formula = y ~ a * x + b, se = F,
+                    #             method.args = list(start = list(a = 0.1, b = 0.1))) +
+                    labs(x = "# Spawning CO (Regionally) (1,000's of Fish)", 
+                         y = "# Juveniles (Simms Ck.)",
+                         title = "Regional Coho Abundance relative to Juvenile Coho Abundance in Simms Creek") +
+                    theme_bw() +
+                    theme(legend.position = "bottom")
+                    
+                    
 
 # ||--------------------------------------|| ----
 # 3 Local (Simms Creek) Data----
@@ -147,16 +172,16 @@ spring.fish.dat %>%
 #     - Initial read suggests low CT during years with high CO. 
 #     - Adding geom_smooth(span = 0.3) shows that there is not a relationship. 
 #     - CO abundance was higher from 2013 to 2017, but was comparable from 2008 to 2012 and from 2018 onwards.
-  spring.fish.dat %>% ggplot(., aes(x = spawn.year, 
-                             y = juveniles, 
-                             color = species)) +
+spring.fish.dat %>% ggplot(., aes(x = spawn.year, 
+                                  y = juveniles, 
+                                  color = species)) +
                       geom_point()+
-                      geom_smooth() +
-                      # geom_smooth(spawn = 0.3) +
+                      # geom_smooth() +
+                      geom_smooth(spawn = 0.5) +
                       scale_x_continuous(limits= c(2008, 2024),
                                          breaks = seq(2008,2024,2))+
                       labs(x = "",
-                           y = "# of Fish",
+                           y = "# of Juveniles (Simms Ck.)",
                            title = "Number of juvenile CO and CT smolts per year",
                            color = "Species")
 
@@ -213,26 +238,24 @@ simms.COCT <- rbind(simms.CO %>% filter(age.class != "juvenile"),
 ## * 3.2 Relative Abundance ----
 ## * * * * Juvenile CO vs Juvenile CT ----
 spring.fish.dat %>% select(species, juveniles) %>%
-             pivot_wider(names_from = species, values_from = juveniles) %>%
+                    pivot_wider(names_from = species, values_from = juveniles) %>%
             
             ggplot(.,aes(x = CT, y = CO))+
             geom_point() +
             geom_smooth(method = 'lm', formula = y~x)+
-            labs(x = "# of Juvenile Cutthroat",
-                 y = "# of Juvenile Coho",
-                 title = "Relative number of juvenile Coho Salmon and Cutthroat Trout emigrants")
+            labs(x = "# of Juvenile Cutthroat (Simms Ck.)",
+                 y = "# of Juvenile Coho  (Simms Ck.)") +
+            theme_bw()
 
 ## * * * * Juvenile CO vs Adult CO ----
-simms.CO %>% pivot_wider(names_from = age.class, 
-                         values_from = n.fish) %>% 
+simms.CO %>% pivot_wider(names_from = age.class, values_from = n.fish) %>% 
              mutate(juvenile = juvenile *10) %>%
              
              ggplot(., aes(x = adult, y = juvenile)) +
              geom_point() +
              geom_smooth(method = 'lm', formula = y~x)+
-             labs(x = "# of Adult Coho",
-                  y = "# of Juvenile Coho",
-                  title = "Relationship between Adult spawning Coho Salmon and outmigrating \njuvenile Coho Salmon in Simms Creek") +
+             labs(x = "# of Adult Coho (Simms Ck.)",
+                  y = "# of Juvenile Coho (Simms Ck.)") +
              scale_x_continuous(limits = c(0, 130),
                                 breaks = seq(0, 130,10))+
              scale_y_continuous(limits = c(200, 1000),
@@ -248,9 +271,8 @@ simms.COCT %>% select(spawn.year, n.fish, age.class.spp) %>%
              ggplot(., aes(x = CO_adult, y = CT_juvenile)) +
              geom_point() +
              geom_smooth(method = 'lm', formula = y~x)+
-             labs(x = "# of Adult Coho",
-                  y = "# of Juvenile Cutthroat",
-                  title = "Relationship between Adult spawning Coho Salmon and outmigrating \njuvenile Coho Salmon in Simms Creek") +
+             labs(x = "# of Adult Coho (Simms Ck.)",
+                  y = "# of Juvenile Cutthroat (Simms Ck.)") +
              scale_x_continuous(limits = c(0, 130),
                                 breaks = seq(0, 130,10))+
              scale_y_continuous(limits = c(0, 800),
@@ -268,33 +290,27 @@ juv.surv <- simms.dat %>% filter(Species =="CO") %>%
                        mutate(across(where(is.numeric), ~replace(.,is.na(.),0)),
                               Adult         = Adult - Jack,
                               Juv.Total     = sum(`Age-0`,`Age-1`,na.rm = TRUE),
-                              Eggs          = (0.5*Adult) * 2600,
-                              Egg_to_Smolt  = Juv.Total/Eggs) %>%
+                              Fecundity     = 2600,
+                              Eggs          = (0.5*Adult) * Fecundity,
+                              Egg_to_Smolt  = Juv.Total/Eggs,
+                              Species = "CO") %>%
                       # Remove years with incomplete data. 
                        filter(spawn.year >=2008,
                               !spawn.year %in% c(2018, 2019, 2020, 2023)) %>%
                        ungroup() %>%
-                       mutate(Juv.Total.Lagged = lag(Juv.Total))
-                      
-                       # filter(spawn.year >= 2008 & spawn.year <=2017)
+                      # Lag juveniles by 1 year to account for abundance upon emergence (i.e., 2-3 months when YOY and past years fish are present) 
+                       mutate(Juv.Total.Lagged = lag(Juv.Total)) %>%
+                       select(Species, spawn.year, "Adult","Jack","Fecundity","Age-0","Age-1","Juv.Total","Juv.Total.Lagged","Eggs","Egg_to_Smolt")
+
 ## Prepare Plots
-      ## Spawners vs Juveniles
-      ggplot(juv.surv, 
-             aes(x = Adult, y = Juv.Total)) +
-        geom_point() +
-        geom_smooth(method = 'lm', formula = y~x) +
-        labs(y = "# Juvenile Coho Salmon",
-             x = "# Adult Coho Salmon",
-             title = "Relationship between number of Coho Salmon spawners and number of offspring produced.") +
-        theme_bw()
-      
+
       ## Egg-to-Fry Survival Relative to Juvenile Abundance
       ggplot(juv.surv, 
              aes(x = Juv.Total, y = 100*Egg_to_Smolt)) +
         geom_point() +
         geom_smooth(method = 'lm', formula = y~x) +
         labs(y = "Egg-to-Smolt Survival (%)",
-             x = "# Juvenile Coho Salmon",
+             x = "# Juvenile Coho Salmon (Simms Ck.)",
              title = "Relationship between Egg-to-Smolt survival and number of Juvenile Coho Salmon produced each year.") +
         theme_bw()
       
@@ -341,5 +357,28 @@ Adult.Surv <- left_join(simms.dat %>% filter(Species == "CO") %>%
         theme_bw()                 
       
       
+## 5. Plot showing local and regional abundance trends 
+dat <- rbind(simms.dat %>% mutate(AgeClass = ifelse(AgeClass == "Adult", "Adult","Juvenile")) %>%
+                           group_by(Year,Period,Species, AgeClass) %>%
+                           summarize(n = n()) %>%
+                           mutate(Dataset = "Local"),
+             regional.dat %>% mutate(Year = spawn.year,
+                                     Period = "Fall",
+                                     Species = "CO",
+                                     AgeClass = "Adult",
+                                     n        = spawners/1000,
+                                     Dataset  = "Regional (1,000s of fish") %>%
+                              select(Year, Period, Species, AgeClass,n, Dataset)) %>%
+              filter(!(Species == "CT" & AgeClass == "Adult"),
+                     !is.na(AgeClass),
+                     Year >= 2008) %>%
+              mutate(Species = paste0(Species," (",Dataset,")"))
 
-      
+
+ggplot(dat, aes(x = Year, y = n, color = Species)) +
+    geom_point() +
+    geom_smooth(aes(color = Species, linetype = AgeClass)) + 
+    labs(x = "",
+         y = "# of Fish") +
+    theme_bw() +
+    theme(legend.position = "bottom")
