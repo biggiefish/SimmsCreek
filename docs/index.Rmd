@@ -415,7 +415,7 @@ No scale data has been collected during juvenile enumeration work on Simms Creek
 
 Applying these age bins to the length frequency data suggests that CCT are range in age from Age-1 to Age 3+, but are primarily Age-2 (Figure 9), while CO are almost exclusively Age-1 (Figure 10). Interestingly, Age-0 CO were present in 2009 and 2024, but not other years. While this may be coincidental, it's worth noting that the peak juvenile CCT counts were recorded in 2008 and 2024. There are a number of mechanisms that may explain why Age-0 CO were first observed in 2024: 1) they weren't recorded in past years, CO emigrated out of Simms Creek earlier than normal due to high CT abundance.
 
-#### Figure 9. Age Composition of Juvenile CCT and CO across years.
+#### Figure 9. Age composition across years.
 ```{r 10. Age Class - CT Age Class Composition across years, fig.cap = "Figure 9. Assumed age class composition of juvenile CCT and Coho Salmon out migrating from Simms Creek since 2008.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 12, fig.height = 20}
 
 juv.AgeClass.plot
@@ -423,7 +423,12 @@ juv.AgeClass.plot
 ```
 
 
+#### Figure 10. Size by age class across years.
+```{r 10. Age Class - Age Class Size across years, fig.cap = "Figure 10. Median size by age class of fish outmigrating from Simms Creek since 2008.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 12, fig.height = 20}
 
+age.class.size
+
+```
 
 ### 2.6. Migration Timing {.tabset .tabset-dropdown}
 ```{r 5. Capture Timing - Load Data, echo=FALSE, warning=FALSE, message = FALSE, include = FALSE}
@@ -488,32 +493,32 @@ Adult Coho Salmon have been detected at the fence as early as `r CO.first.detect
 
 #### Spring and Fall Migration Timing Tables and Figures
 
-#### Figure 10. Spring - Overall Capture Timing
-```{r 5. Capture Timing - Spring - Overall Median Capture Timing, fig.cap = "Figure 10. Overall median spring capture timing.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 6}
+#### Figure 11. Spring - Overall Capture Timing
+```{r 5. Capture Timing - Spring - Overall Median Capture Timing, fig.cap = "Figure 11. Overall median spring capture timing.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 6}
 Spring.Boxplot.Facet
 ```
 
 
-#### Figure 11. Spring - Daily captures of CCT per year
-```{r 5. Capture Timing - Spring - Daily CT Captures per year, fig.cap = "Figure 11. Total daily capture of CCT and proportion of total annual captures.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 25}
+#### Figure 12. Spring - Daily captures of CCT per year
+```{r 5. Capture Timing - Spring - Daily CT Captures per year, fig.cap = "Figure 12. Total daily capture of CCT and proportion of total annual captures.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 25}
 
 print(daily_catch_plot.Spring.CT)
 ```
 
-#### Figure 12. Spring - Total daily captures of Coho Salmon per year
-```{r 5. Capture Timing - Spring - Daily CO Captures per year, fig.cap = "Figure 12. Number of Coho Salmon captured during each day of spring fence operation since 2008.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 25}
+#### Figure 13. Spring - Total daily captures of Coho Salmon per year
+```{r 5. Capture Timing - Spring - Daily CO Captures per year, fig.cap = "Figure 13. Number of Coho Salmon captured during each day of spring fence operation since 2008.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 25}
 
 print(daily_catch_plot.Spring.CO)
 ```
 
-#### Figure 13. Fall - Total daily captures of Coho Salmon per year
-```{r 5. Capture Timing - Fall - Daily CO Captures per year, fig.cap = "Figure 13. Number of Coho Salmon captured during each day of fall fence operation since 2008.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 25}
+#### Figure 14. Fall - Total daily captures of Coho Salmon per year
+```{r 5. Capture Timing - Fall - Daily CO Captures per year, fig.cap = "Figure 14. Number of Coho Salmon captured during each day of fall fence operation since 2008.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 25}
 
 print(daily_catch_plot.Fall.CO)
 ```
 
-#### Figure 14. Fall - Daily captures of CCT per year
-```{r 5. Capture Timing - Fall - Daily CT Captures per year, fig.cap = "Figure 14. Total daily capture of CCT and proportion of total annual captures.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 25}
+#### Figure 15. Fall - Daily captures of CCT per year
+```{r 5. Capture Timing - Fall - Daily CT Captures per year, fig.cap = "Figure 15. Total daily capture of CCT and proportion of total annual captures.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 25}
 
 print(daily_catch_plot.Fall.CT)
 ```

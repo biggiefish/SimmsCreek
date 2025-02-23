@@ -52,8 +52,23 @@ CO.AgeClass.Plot <- simms.dat %>%
                     geom_col() +
                     facet_grid(Year~.)
 
+juv.AgeClass.plot.years <- simms.dat %>% 
+                              group_by(Year,Period,Species, AgeClass, Length) %>%
+                              summarize(n = n()) %>%
+                              filter(Period == "Spring",
+                                     !is.na(AgeClass)) %>%
+                              mutate(Species = case_when(Species == "CT" ~ "Cutthroat Trout",
+                                                         Species == "CO" ~ "Coho Salmon")) %>%
+                              
+                              
+                              ggplot(., aes(x = AgeClass, y = n)) +
+                              geom_col() +
+                              facet_grid(Year~Species) +
+                              labs(x = "", y = "# of Fish") +
+                              theme_bw()
+
 juv.AgeClass.plot <- simms.dat %>% 
-                      group_by(Year,Period,Species, AgeClass, Length) %>%
+                      group_by(Period,Species, AgeClass, Length) %>%
                       summarize(n = n()) %>%
                       filter(Period == "Spring",
                              !is.na(AgeClass)) %>%
@@ -63,8 +78,18 @@ juv.AgeClass.plot <- simms.dat %>%
                       
                       ggplot(., aes(x = AgeClass, y = n)) +
                       geom_col() +
-                      facet_grid(Year~Species) +
+                      facet_grid(.~Species) +
                       labs(x = "", y = "# of Fish") +
                       theme_bw()
 
-juv.AgeClass.plot
+age.class.size <-  simms.dat %>%
+                  group_by(Year, Period,Species, AgeClass, Length) %>%
+                  summarize(n = n()) %>%
+                  filter(Period == "Spring",
+                         !is.na(AgeClass)) %>%
+                  mutate(Species = case_when(Species == "CT" ~ "Cutthroat Trout",
+                                             Species == "CO" ~ "Coho Salmon")) %>%
+                  ggplot(., aes(x = Length, y = 1, color = Species))+
+                  geom_boxplot() +
+                  facet_grid(Year ~ AgeClass) +
+                  theme_bw()
