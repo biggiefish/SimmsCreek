@@ -440,6 +440,37 @@ boxplots.summary <- list()
   Spring.Boxplot.Years.CT <-  boxplots.years[[1]][[2]]
   Fall.Boxplot.Years.CT   <-  boxplots.years[[2]][[2]]
             
+  ## Faceted Median Date Across Years
+  boxplots.years <-list()
+  
+    for(i in sample_period){
+      
+      bx <- bx.dat %>%
+        filter(Period == i)
+      
+      bxplot <- ggplot(bx, aes(y = as.factor(Year), 
+                               x = date.std, 
+                               color = Species)) +
+        geom_boxplot(alpha = 0.8) +
+        geom_point(aes(color = Species),
+                   shape = 1,
+                   alpha = 0.2,
+                   position = position_jitterdodge()) +
+        geom_hline(aes(linetype = "Mean CO", yintercept = ifelse(Period == "Spring", as.Date("2024-05-15"), as.Date("2024-10-31"))))+
+        geom_hline(aes(linetype = "Mean CT", yintercept = ifelse(Period == "Spring", as.Date("2024-05-11"), as.Date("2024-11-02"))))+  
+        scale_linetype_manual(values = c("dashed", "dotted")) +
+        labs(x = "", y = "") +
+        scale_x_date(date_breaks = "4 days", date_labels = "%b %d") +
+        guides(linetype = guide_legend(title = element_blank()))+  
+        theme_bw() +
+        theme(legend.position = "bottom")
+      
+      boxplots.years[[i]] <- bxplot
+    }
+  
+
+  Spring.Boxplot.Facet <-  boxplots.years[[1]]
+  Fall.Boxplot.Facet   <-  boxplots.years[[2]]
             
             
 ## Mean Capture Timing Trends ----

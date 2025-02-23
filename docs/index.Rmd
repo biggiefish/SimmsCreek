@@ -44,35 +44,20 @@ knitr::opts_chunk$set(echo = FALSE)
 
 # 1. Introduction
 
-Simms Creek is a small, 3rd order stream that drains an area of \~1,800 ha into the Salish Sea, near Campbell River's Willow Point neighborhood. The lower reach of Simms Creek (\~3 km of channel, east of Jubilee Road), is contained within a narrow urban green way that is bordered by residential properties. From Jubilee Road to the Inland Highway the stream is protected within [Beaver Lodge Lands](https://campbellriver.travel/news/forestry-guide-to-beaver-lodge-lands/), upstream of the Inland Highway, \>1.5 km of tributary channel is located within private forest lands.
+Simms Creek is a small, 3rd order stream that drains an area of \~1,800 ha into the Salish Sea, near Campbell River's Willow Point neighborhood. The lower reach of Simms Creek (\~3 km of channel, east of Dogwood Street), is contained within a narrow urban green way that is bordered by residential properties. From Dogwood Street Road the streams runs for ~ 2 km to the Inland Highway and is protected within [Beaver Lodge Lands](https://campbellriver.travel/news/forestry-guide-to-beaver-lodge-lands/), upstream of the Inland Highway, \>1.5 km of tributary channel is located within private forest lands in various stages of regeneration.
 
-Historic fish observations indicate that Chum, Chinook, Pink and Coho salmon have all been observed in the stream, as well as Coastal Cutthroat Trout (CCT), Rainbow Trout and steelhead. More recent monitoring (i.e., this dataset), suggest that Coho Salmon (CO) and CCT are the primary species within Simms Creek, both of which utilize the stream year round - though a small number of juvenile Chinook Salmon were identified in 2024.
+Chum, Chinook, Pink and Coho salmon have all been observed in Simms Creek, as well as Coastal Cutthroat Trout (CCT), Rainbow Trout and steelhead. More recent monitoring (i.e., this dataset), suggest that Coho Salmon (CO) and CCT are the primary species within Simms Creek, both of which are present within the stream year round - though a small number of juvenile Chinook Salmon were identified in 2024.
 
-[Greenways Land Trust](https://www.greenwaystrust.ca/) has supported Simms Creek Stewards for +20 years, including operation of a fish fence near the mouth of the stream since 2008. Juvenile and adult fish moving past the fence are tallied each spring and fall, respectively. The objective of this project is to explore the juvenile fence dataset. All work is being done strictly for fun and out of personal curiosity. Any feedback, input, or support is welcome. Also, I have a soft spot for CCT, so be warned that effort and results will be slightly trout biased.
-
-Throughout this analysis, I explore what data collected during spring and fall can tell us about:
-
-1.  What species are utilizing Simms Creek?
-
-2.  Whether the current fence operation program is capturing the complete migration period?
-
-3.  When are key behaviours occurring (e.g., when is peak smolt? when do adults arrive?) and are they occurring at consistent times each year?
-
-4.  How large are fish encountered during smolt and upstream migration periods? What age classes are migrating (I don't have scale data, but we can make an educated guess).
-
-5.  What is the freshwater survival of Coho Salmon? Note that we cannot estimate marine survival without some information on individual fish (i.e., coded wire tag data to verify that returning adults originated in Simms Creek and when they smolted).
-
-6. What factors may be driving variability in the number of CCT and CO smolts outmigrating each spring and the number of adult CO returning each fall.
+[Greenways Land Trust](https://www.greenwaystrust.ca/) has supported Simms Creek Stewards for +20 years, including operation of a fish fence near the mouth of the stream since 2008. Juvenile and adult fish moving past the fence are tallied each spring and fall, respectively. The objective of this project is to explore the juvenile fence dataset. All work is being done strictly for fun and out of personal curiosity. Any feedback, input, or support is welcome. Also, I have a soft spot for CCT, so be warned that effort and results will be slightly trout biased. Let's take a look at what has been completed to date. It's a tremendous amount of work and all volunteers and supporters should be commended!
 
 
-But before we can do that, lets take a look at what has been completed to date. It's a tremendous amount of work and all volunteers and supporters should be commended!
 
 ```{r 1. Load and Format Data, echo = FALSE, warning = FALSE, message = FALSE}
 ## Clear workspace ##
 # rm(list = ls())  
 
 # ## Load Prepped Data
- # source("SourceFiles/0. RunSourceFiles.R")
+# source("SourceFiles/0. RunSourceFiles.R")
 # 
   source("SourceFiles/1. Load and Prep Data.R")
 # 
@@ -80,6 +65,29 @@ But before we can do that, lets take a look at what has been completed to date. 
  source("SourceFiles/2. Trapping Effort.R")
 
 ```
+
+```{r download data}
+data_all %>%
+download_this(
+    output_name = "Raw Fence Data",
+    output_extension = ".csv",
+    button_label = "Download Fence Data (.csv)",
+    button_type = "default",
+    has_icon = TRUE,
+    icon = "fa fa-save"
+  )
+
+simms_env %>%
+download_this(
+    output_name = "Raw Fence Data",
+    output_extension = ".csv",
+    button_label = "Download Enviromental Data (.csv)",
+    button_type = "default",
+    has_icon = TRUE,
+    icon = "fa fa-save"
+  )
+```
+
 
 # 2. Fence Operation
 
@@ -230,7 +238,7 @@ print(cond_plot)
 source("SourceFiles/4. Annual Captures.R")
 ```
 
-```{r 4. Fish Captures - values for text}
+```{r 4. Fish Captures - values for text, echo=FALSE, warning=FALSE, message = FALSE, include = FALSE}
 annual.catches <- catch_plot.data %>% group_by(Period, Species) %>%
                                          summarize(mean = round(mean(n),0),
                                                    min = min(n),
@@ -257,11 +265,13 @@ As expected, most fish are captured in the Spring. Catches of CCT have ranged fr
 print(catch_annual_barPlot.Spring)
 ```
 #### Table 5. Spring - Total annual catches
-```{r Annual Captures - Spring Summary Table, echo=FALSE, warning=FALSE, message = FALSE}
+```{r 4. Annual Captures - Spring Summary Table, echo=FALSE, warning=FALSE, message = FALSE}
 ## Kable - Master Summary ----
 options(knitr.kable.NA = '-')
 
-kable(catch_annual.Table.Spring,
+catch_annual.Table.Spring %>% group_by(Year) %>% mutate(total.catch = nCT + nCO)
+
+kable(catch_annual.Table.Spring  %>% group_by(Year) %>% mutate(total.catch = nCT + nCO),
       "html",
       booktabs = T,
       
@@ -269,7 +279,7 @@ kable(catch_annual.Table.Spring,
       # col.names = c("Year", "Period", "Start", "End", "# Days Sampled", 
       col.names = c("Year", "Start", "End", "# Days Sampled",  
                     "Med.","Min","Max", "n", "Mean", "SD" ,"Min","Max",
-                    "Med.","Min","Max", "n", "Mean", "SD" ,"Min","Max"),
+                    "Med.","Min","Max", "n", "Mean", "SD" ,"Min","Max", "n"),
       caption = "**Table 5. Spring capture summary - capture timing, total captures and length of CCT and Coho Salmon.**",
       digits = 1) %>%
   #column_spec(c(1, 3,10,17), bold = TRUE) %>%
@@ -280,8 +290,8 @@ kable(catch_annual.Table.Spring,
   # add_header_above(c(" " = 2, "Sample Period" = 3, 
   add_header_above(c(" " = 1, "Sample Period" = 3,                   
                      "Capture Timing" = 3,"Fork Length (mm)" = 5,
-                     "Capture Timing" = 3,"Fork Length (mm)" = 5)) %>%
-  add_header_above(c(" " = 4, "CCT" = 8, "Coho Salmon" = 8)) 
+                     "Capture Timing" = 3,"Fork Length (mm)" = 5,"(CT+CO)"=1)) %>%
+  add_header_above(c(" " = 4, "CCT" = 8, "Coho Salmon" = 8,"Total"=1)) 
 ```
 
 #### Figure 4. Fall - Total annual catches
@@ -317,8 +327,105 @@ kable(catch_annual.Table.Fall,
                      "Capture Timing" = 3,"Fork Length (mm)" = 5)) %>%
   add_header_above(c(" " = 4, "CCT" = 8, "Coho Salmon" = 8)) 
 ```
+### 2.4 Length Frequency {.tabset .tabset-dropdown}
+```{r 6. Length Frequency - Load Data, echo=FALSE, warning=FALSE, message = FALSE, include = FALSE}
+ source("SourceFiles/6. Length Frequency.R")
+```
 
-### 2.4. Migration Timing {.tabset .tabset-dropdown}
+```{r 6. length values, echo = FALSE, warning = FALSE, message = FALSE, include = FALSE}
+spring.dat <- data_all %>% filter(Period == "Spring",
+                                  Length>20,
+                                  Species %in% c("CO","CT"))
+CO_min <- min(spring.dat$Length[spring.dat$Species=="CO"], na.rm = TRUE)
+CO_max <- max(spring.dat$Length[spring.dat$Species=="CO"], na.rm = TRUE)
+
+
+CT_min <- min(spring.dat$Length[spring.dat$Species=="CT"], na.rm = TRUE)
+CT_max <- max(spring.dat$Length[spring.dat$Species=="CT"], na.rm = TRUE)
+
+Aged <- spring.dat %>% mutate(Age =ifelse(Species == "CO",
+                                          ifelse(Length <110, 0, 1),
+                                    ifelse(Species == "CT", 
+                                         ifelse(Length <80, 0,
+                                               ifelse(Length <150, 1, 2)),NA))) %>%
+                        select(Period, Species, Length, Age)
+
+                          
+    age.table <- Aged %>% mutate(Age = as.factor(Age)) %>%
+                          group_by(Species, Age) %>%
+                          summarise(n = n(),
+                                    min = min(Length),
+                                    max = max(Length),
+                                    avg = mean(Length))
+    
+CO.Age0.perc <- age.table$n[age.table$Species =="CO" & 
+                            age.table$Age ==0]/(age.table$n[age.table$Species =="CO" & 
+                                                           age.table$Age ==0]+ 
+                                                  age.table$n[age.table$Species =="CO" & 
+                                                            age.table$Age ==1])
+                                                                       
+```
+
+
+The length frequency figures shown below shed light on the population structure and behaviours of Coho Salmon and CCT in Simms Creek. The lengths of CCT (`r CT_min` mm to `r CO_max` mm) and Coho Salmon (`r CO_min` mm to `r CO_max` mm) measured at the fence suggest multiple age classes of juveniles are moving out of the system each spring. Assuming that CO <100 mm are Age 0 and CO >100 mm are Age 1 would suggest that `r percent(round(CO.Age0.perc,digits = 3))` of all overall migrants are Age 0 and the remainder are Age 1. A wider range of age classes is likely present among CCT, including Age 0 fish (~<80 mm) up to mature fish > 230 mm and upwards of 3+ years. 
+
+Mature CCT >230 mm represent <`r percent(round(CT.AgeClass.Prop$Adult, digits =3))` of the total catch of CCT. However, all mature CCT >230 mm were moving downstream, suggesting that they either 1) moved upstream and spawned prior to the start of fence operation or 2) had overwintered in Simms Creek and were follow fry out in the spring - whether this was their first movement to the ocean is unknown. 
+
+#### Length Frequency Table and Figures
+
+#### Figure 5. Length Frequency of all CCT
+```{r 6. Length Frequency - CT Length Frequency All Years Combined, fig.cap = "Figure 5. Length Frequency of all CCT.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 8, fig.height = 6}
+
+print(LF.plot_spring.all.CT)
+```
+
+
+#### Figure 6. Length frequency of Coastal CCT across years.
+```{r 6. Length Frequency - CT Length Frequency Across Years, fig.cap = "Figure 6. Length Frequency of CCT across years.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 12, fig.height = 20}
+
+print(LF.plot_spring.CT)
+```
+
+#### Figure 7. Length frequency of all Coho Salmon.
+```{r 6. Length Frequency - CO Length Frequency All Years Combined, fig.cap = "Figure 7. Length Frequency of All Coho Salmon.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 8, fig.height = 6}
+
+print(LF.plot_spring.all.CO)
+```
+
+#### Figure 8. Length frequency of Coho Salmon across years.
+```{r 6. Length Frequency - CO Length Frequency Across Years, fig.cap = "Figure 8. Length Frequency of Coho Salmon across years.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 12, fig.height = 20}
+
+print(LF.plot_spring.CO)
+```
+
+### 2.5 Age Composition
+```{r 10. AgeClasses - Load Data, echo=FALSE, warning=FALSE, message = FALSE, include = FALSE}
+source("SourceFiles/10. AgeClasses.R")
+```
+
+No scale data has been collected during juvenile enumeration work on Simms Creek. However, information collected on systems within the region suggests we can loosely apply the following age classes to juvenile CT and CO:
+
+  -  CT < 80  ~ Age-0 
+  -  CT < 120 ~ Age-1
+  -  CT < 200 ~ Age-2
+  -  CT > 200 ~ Age-2+
+  -  CO < 80  ~ Age-0
+  -  CO < 120 ~ Age-1
+  -  CO > 120 ~ Age-1+ 
+
+Applying these age bins to the length frequency data suggests that CCT are range in age from Age-1 to Age 3+, but are primarily Age-2 (Figure 9), while CO are almost exclusively Age-1 (Figure 10). Interestingly, Age-0 CO were present in 2009 and 2024, but not other years. While this may be coincidental, it's worth noting that the peak juvenile CCT counts were recorded in 2008 and 2024. There are a number of mechanisms that may explain why Age-0 CO were first observed in 2024: 1) they weren't recorded in past years, CO emigrated out of Simms Creek earlier than normal due to high CT abundance.
+
+#### Figure 9. Age Composition of Juvenile CCT and CO across years.
+```{r 10. Age Class - CT Age Class Composition across years, fig.cap = "Figure 9. Assumed age class composition of juvenile CCT and Coho Salmon out migrating from Simms Creek since 2008.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 12, fig.height = 20}
+
+juv.AgeClass.plot
+
+```
+
+
+
+
+### 2.6. Migration Timing {.tabset .tabset-dropdown}
 ```{r 5. Capture Timing - Load Data, echo=FALSE, warning=FALSE, message = FALSE, include = FALSE}
  source("SourceFiles/5. Capture Timing.R")
 ```
@@ -381,44 +488,16 @@ Adult Coho Salmon have been detected at the fence as early as `r CO.first.detect
 
 #### Spring and Fall Migration Timing Tables and Figures
 
-#### Figure 5. Spring - Overall Capture Timing
-```{r 5. Capture Timing - Spring - Overall Median Capture Timing, fig.cap = "Figure 5. Overall median spring capture timing.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 6}
-Spring.Boxplot.Summary
+#### Figure 10. Spring - Overall Capture Timing
+```{r 5. Capture Timing - Spring - Overall Median Capture Timing, fig.cap = "Figure 10. Overall median spring capture timing.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 6}
+Spring.Boxplot.Facet
 ```
 
-#### Figure 5. Spring - Median CO Capture Timing Across Years
-```{r 5. Capture Timing - Spring - Median Spring CO Capture Timing, fig.cap = "Figure 6. Median spring cpature timing", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 12}
-Spring.Boxplot.Years.CO
-```
 
-#### Figure 6. Spring - Median CT Capture Timing Across Years
-```{r 5. Capture Timing - Spring - Median Spring CCT Capture Timing, fig.cap = "Figure 7. Median spring cpature timing", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 12}
-Spring.Boxplot.Years.CO
-```
-
-#### Figure 7. Spring - Frequency of Peak CCT Migration
-```{r 5. Capture Timing - Spring - Frequency of Peak CT Capture, fig.cap = "Figure 8. Frequency of peak CCT capture dates during Spring fence monitoring.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 12 }
-print(CT.peak.spring.plot)
-```
-
-#### Figure 8. Spring - Daily captures of CCT per year
-```{r 5. Capture Timing - Spring - Daily CT Captures per year, fig.cap = "Figure 9. Total daily capture of CCT and proportion of total annual captures.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 25}
+#### Figure 11. Spring - Daily captures of CCT per year
+```{r 5. Capture Timing - Spring - Daily CT Captures per year, fig.cap = "Figure 11. Total daily capture of CCT and proportion of total annual captures.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 25}
 
 print(daily_catch_plot.Spring.CT)
-```
-
-#### Figure 10. Spring - Total daily captures of CCT across years
-```{r 5. Capture Timing - Spring - Daily CT Captures Across Years, fig.cap = "Figure 10. Total daily capture of CCT across years.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 12, fig.height = 10}
-
-print(daily_catch_summary_plot.Spring.CT)
-```
-
-
-#### Figure 11. Spring - Frequency of Peak Coho Migration
-```{r 5. Capture Timing - Spring - Frequency of Peak CO Capture, fig.cap = "Figure 11. Frequency of peak Coho capture dates during Spring fence monitoring.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 12 }
-
-print(CO.peak.spring.plot)
-
 ```
 
 #### Figure 12. Spring - Total daily captures of Coho Salmon per year
@@ -427,135 +506,18 @@ print(CO.peak.spring.plot)
 print(daily_catch_plot.Spring.CO)
 ```
 
-#### Figure 13. Spring - Total daily captures of Coho across years
-```{r 5. Capture Timing - Spring - Daily CO  Captures Across Years, fig.cap = "Figure 13. Total daily capture of CCT across years.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 12, fig.height = 8}
-
-print(daily_catch_summary_plot.Spring.CO)
-```
-
-#### Figure 14. Fall - Overall Capture Timing
-```{r 5. Capture Timing - Fall - Overall Median Capture Timing, fig.cap = "Figure 14. Overall median fall capture timing.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 6}
-Fall.Boxplot.Summary
-```
-
-
-#### Figure 15. Fall - Median Fall CO Capture Timing Across Years
-```{r 5. Capture Timing - Fall - Median Fall CO Capture Timing, fig.cap = "Figure 15. Median fall cpature timing", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 12}
-Fall.Boxplot.Years.CO
-```
-
-#### Figure 16. Fall - Median Fall CT Capture Timing Across Years
-```{r 5. Capture Timing - Fall - Median Fall CCT Capture Timing, fig.cap = "Figure 16. Median fall cpature timing", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 12}
-Fall.Boxplot.Years.CO
-```
-
-
-#### Figure 17. Fall - Frequency of Peak Coho Migration
-```{r 5. Capture Timing - Fall - Frequency of Peak CO Capture, fig.cap = "Figure 17. Frequency of peak Coho capture dates during Fall fence monitoring.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 12 }
-
-print(CO.peak.fall.plot)
-
-```
-
-#### Figure 18. Fall - Total daily captures of Coho Salmon per year
-```{r 5. Capture Timing - Fall - Daily CO Captures per year, fig.cap = "Figure 18. Number of Coho Salmon captured during each day of fall fence operation since 2008.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 25}
+#### Figure 13. Fall - Total daily captures of Coho Salmon per year
+```{r 5. Capture Timing - Fall - Daily CO Captures per year, fig.cap = "Figure 13. Number of Coho Salmon captured during each day of fall fence operation since 2008.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 25}
 
 print(daily_catch_plot.Fall.CO)
 ```
 
-####  Figure 19. Fall - Total daily captures of Coho across years
-```{r 5. Capture Timing - Fall - Daily CO  Captures Across Years, fig.cap = "Figure 19. Total daily capture of CCT across years.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 12, fig.height = 8}
-
-print(daily_catch_summary_plot.Fall.CO)
-```
-
-
-
-#### Figure 20. Fall - Daily captures of CCT per year
-```{r 5. Capture Timing - Fall - Daily CT Captures per year, fig.cap = "Figure 20. Total daily capture of CCT and proportion of total annual captures.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 25}
+#### Figure 14. Fall - Daily captures of CCT per year
+```{r 5. Capture Timing - Fall - Daily CT Captures per year, fig.cap = "Figure 14. Total daily capture of CCT and proportion of total annual captures.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10, fig.height = 25}
 
 print(daily_catch_plot.Fall.CT)
 ```
 
-#### Figure 21. Fall - Total daily captures of CCT across years
-```{r 5. Capture Timing - Fall - Daily CT Captures Across Years, fig.cap = "Figure 21. Total daily capture of CCT across years.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 12, fig.height = 10}
-
-print(daily_catch_summary_plot.Fall.CT)
-```
-
-
-
-
-### 2.5 Length Frequency {.tabset .tabset-dropdown}
-```{r 6. Length Frequency - Load Data, echo=FALSE, warning=FALSE, message = FALSE, include = FALSE}
- source("SourceFiles/6. Length Frequency.R")
-```
-
-```{r 6. length values, echo = FALSE, warning = FALSE, message = FALSE, include = FALSE}
-spring.dat <- data_all %>% filter(Period == "Spring",
-                                  Length>20,
-                                  Species %in% c("CO","CT"))
-CO_min <- min(spring.dat$Length[spring.dat$Species=="CO"], na.rm = TRUE)
-CO_max <- max(spring.dat$Length[spring.dat$Species=="CO"], na.rm = TRUE)
-
-
-CT_min <- min(spring.dat$Length[spring.dat$Species=="CT"], na.rm = TRUE)
-CT_max <- max(spring.dat$Length[spring.dat$Species=="CT"], na.rm = TRUE)
-
-Aged <- spring.dat %>% mutate(Age =ifelse(Species == "CO",
-                                          ifelse(Length <110, 0, 1),
-                                    ifelse(Species == "CT", 
-                                         ifelse(Length <80, 0,
-                                               ifelse(Length <150, 1, 2)),NA))) %>%
-                        select(Period, Species, Length, Age)
-
-                          
-    age.table <- Aged %>% mutate(Age = as.factor(Age)) %>%
-                          group_by(Species, Age) %>%
-                          summarise(n = n(),
-                                    min = min(Length),
-                                    max = max(Length),
-                                    avg = mean(Length))
-    
-CO.Age0.perc <- age.table$n[age.table$Species =="CO" & 
-                            age.table$Age ==0]/(age.table$n[age.table$Species =="CO" & 
-                                                           age.table$Age ==0]+ 
-                                                  age.table$n[age.table$Species =="CO" & 
-                                                            age.table$Age ==1])
-                                                                       
-```
-
-
-The length frequency figures shown below shed light on the population structure and behaviours of Coho Salmon and CCT in Simms Creek. The lengths of CCT (`r CT_min` mm to `r CO_max` mm) and Coho Salmon (`r CO_min` mm to `r CO_max` mm) measured at the fence suggest multiple age classes of juveniles are moving out of the system each spring. Assuming that CO <100 mm are Age 0 and CO >100 mm are Age 1 would suggest that `r percent(round(CO.Age0.perc,digits = 3))` of all overall migrants are Age 0 and the remainder are Age 1. A wider range of age classes is likely present among CCT, including Age 0 fish (~<80 mm) up to mature fish > 230 mm and upwards of 3+ years. 
-
-Mature CCT >230 mm represent <`r percent(round(CT.AgeClass.Prop$Adult, digits =3))` of the total catch of CCT. However, all mature CCT >230 mm were moving downstream, suggesting that they either 1) moved upstream and spawned prior to the start of fence operation or 2) had overwintered in Simms Creek and were follow fry out in the spring - whether this was their first movement to the ocean is unknown. 
-
-#### Length Frequency Table and Figures
-
-#### Figure 13. Length Frequency of all CCT
-```{r 6. Length Frequency - CT Length Frequency All Years Combined, fig.cap = "Figure 13. Length Frequency of all CCT.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 8, fig.height = 6}
-
-print(LF.plot_spring.all.CT)
-```
-
-
-#### Figure 14. Length frequency of Coastal CCT across years.
-```{r 6. Length Frequency - CT Length Frequency Across Years, fig.cap = "Figure 14. Length Frequency of CCT across years.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 12, fig.height = 20}
-
-print(LF.plot_spring.CT)
-```
-
-#### Figure 15. Length frequency of all Coho Salmon.
-```{r 6. Length Frequency - CO Length Frequency All Years Combined, fig.cap = "Figure 15. Length Frequency of All Coho Salmon.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 8, fig.height = 6}
-
-print(LF.plot_spring.all.CO)
-```
-
-#### Figure 16. Length frequency of Coho Salmon across years.
-```{r 6. Length Frequency - CO Length Frequency Across Years, fig.cap = "Figure 16. Length Frequency of Coho Salmon across years.", fig.topcaption = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 12, fig.height = 20}
-
-print(LF.plot_spring.CO)
-```
 
 
 

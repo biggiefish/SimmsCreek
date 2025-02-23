@@ -55,8 +55,10 @@
         library(kableExtra)
         library(shiny)
         library(janitor)
-    
-    ##  Set up captioner package calls. 
+        library(jsonlite)
+        library(downloadthis)
+        
+        ##  Set up captioner package calls. 
         fig_nums   <- captioner(prefix = "Figure")  
         table_nums <- captioner(prefix = "Table")
         
@@ -162,8 +164,6 @@
                               "PK" = "PK"),
              Species = factor(Species, 
                               levels = c("CT","CO", "CO-J","CN","CM","PK")))
-    
-    
     
     # * Load Environmental Data ----
     for(i in data_sets){
