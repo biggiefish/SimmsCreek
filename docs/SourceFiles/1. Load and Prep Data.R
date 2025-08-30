@@ -82,7 +82,7 @@
         
         spp <- c("CO", "CT")
         sample_period <- c("Spring", "Fall")
-        spring_years <- as.factor(c(2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2022, 2024))
+        spring_years <- as.factor(c(2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2022, 2024, 2025))
         fall_years  <- as.factor(c(2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2022, 2023))
 
 # xxx Load Data xxx ----
@@ -90,7 +90,7 @@
       data_sets <- c("Juvenile","Adult")
     
           for(i in data_sets){
-
+              
             #1.1 List of all files in Directory 
                 files_list <- list.files(paste0("Data/",i ,"/"), pattern = "*.xlsx", full.names = TRUE)
             
@@ -196,9 +196,14 @@
     
     ## * * Rename simms env. variables
     simms_env_Juvenile <- simms_env_Juvenile %>%
-      rename(pH = "PH",
-             Gauge = "Staff.Gauge")
+                          rename(pH = "PH",
+                                 Gauge = "Staff.Gauge",
+                                 Staff.Gauge = "Staff.Guage")
     
+    simms_env_Adult <- simms_env_Adult %>%
+                       mutate(Staff.Gauge = as.numeric(Gauge)) %>%
+                       select(Dataset, Date, Time, Air.Temp, Water.Temp, pH, DO, TDS, Gauge, Weather, Comments, Staff.Gauge, MonitorPeriod)
+   
     #### * * Join Env. Datasets ----
     simms_env <- rbind(simms_env_Juvenile,simms_env_Adult) %>%
                   mutate(Period = ifelse(MonitorPeriod == "Adult","Fall","Spring"),
@@ -209,10 +214,9 @@
                          binary = 1) %>%
                   filter(DatasetYear == Year)
     
-    
-    # * Join Bio and Env Data ----
+# * Join Bio and Env Data ----
     ## * * Prepare Date Sequence  ----
-    date_seq <- data.frame(Date = seq(ymd('2008-04-15'), ymd('2024-06-15'), by = 'days')) %>%
+    date_seq <- data.frame(Date = seq(ymd('2008-04-15'), ymd('2025-06-15'), by = 'days')) %>%
       mutate(Month = strftime(Date, format = "%m"),
              Month = as.numeric(Month))
     
@@ -221,7 +225,7 @@
                   left_join(., data_all_bio, by = c("Date","Period"), suffix = c("","_Bio"), relationship = "many-to-many") %>%
                   mutate(Year = as.numeric(format(Date, format = "%Y")),
                          Period = factor(Period, levels = c("Spring","Fall")),
-                         date.std = case_when(year(Date) >= 0 ~ 'year<-'(Date, 2024))) %>%
+                         date.std = case_when(year(Date) >= 0 ~ 'year<-'(Date, 2025))) %>%
                   select(Year, Period, Date, date.std, Month, Time, Air.Temp, Water.Temp, 
                          pH,   DO,     TDS,  Gauge, Weather, Direction, Species, Length, Weight, Comments)
                 

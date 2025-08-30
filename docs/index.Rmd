@@ -164,7 +164,7 @@ options(knitr.kable.NA = '-')
 
 ### 2.2 Stream Conditions {.tabset .tabset-dropdown}
 
-During each daily trap visit, volunteers record measures of water temperature, pH, Total Suspended Sediment (TSS), dissolved oxygen, and water level (stage). Mean annual measures of each parameter are presented below for the spring and fall monitoring periods (Table 3 and Table 4, Figure 2). 
+During each daily trap visit, volunteers record measures of water temperature, pH, total suspended sediment (TSS), dissolved oxygen (DO), and water level. Mean annual measures of each parameter are presented below for the spring and fall monitoring periods (Table 3 and Table 4, Figure 2). 
 
 #### Stream Conditions Figures and Tables
 
@@ -248,14 +248,20 @@ annual.catches.spring.CT <- annual.catches %>% filter(Period == "Spring", Specie
 annual.catches.spring.CO <- annual.catches %>% filter(Period == "Spring", Species == "CO")
 annual.catches.fall.CT <- annual.catches %>% filter(Period == "Fall", Species == "CT")
 annual.catches.fall.CO <- annual.catches %>% filter(Period == "Fall", Species == "CO")
+annual.catches.fall.CO.old <- catch_plot.data %>% 
+                                  filter(Period == "Fall", Species == "CO", Year <2022) %>%
+                                  group_by(Period,Species) %>%
+                                  summarize(mean = round(mean(n),0),
+                                            min = min(n),
+                                            max = max(n),
+                                            SD  = sd(n))
 ```
 
 
 
-Since 2008, a total of `r format(sum(catch_annual.Table.Spring$nCT), big.mark =",")` juvenile CCT and `r format(sum(catch_annual.Table.Spring$nCO), big.mark =",")` juvenile Coho Salmon have been captured during spring trapping. Annual captures of CCT have ranged from `r format(min(catch_annual.Table.Spring$nCT), big.mark =",")` to `r format(max(catch_annual.Table.Spring$nCT), big.mark =",")` (mean = `r format(mean(catch_annual.Table.Spring$nCT), digits = 1)`) while CO captures have varied from `r format(min(catch_annual.Table.Spring$nCO), big.mark =",")` to `r format(max(catch_annual.Table.Spring$nCO), big.mark =",")` with an overall mean of `r format(mean(catch_annual.Table.Spring$nCO), digits = 1)` fish (Figure 3 and Figure 4, Table 5 and Table 6).
+Since 2008, a total of `r format(sum(catch_annual.Table.Spring$nCT), big.mark =",")` juvenile CCT and `r format(sum(catch_annual.Table.Spring$nCO), big.mark =",")` juvenile Coho Salmon have been captured during spring fence operation. Annual spring captures of CCT have ranged from `r format(min(catch_annual.Table.Spring$nCT), big.mark =",")` to `r format(max(catch_annual.Table.Spring$nCT), big.mark =",")` (mean = `r format(annual.catches.spring.CT$mean, digits = 1)` $\pm$ `r format(annual.catches.spring.CT$SD, digits = 1)`) while spring CO captures have varied from `r format(min(catch_annual.Table.Spring$nCO), big.mark =",")` to `r format(max(catch_annual.Table.Spring$nCO), big.mark =",")` with an overall mean of `r format(mean(catch_annual.Table.Spring$nCO), digits = 1)` fish (Figure 3 and Figure 4, Table 5 and Table 6).
 
-As expected, most fish are captured in the Spring. Catches of CCT have ranged from `r annual.catches.spring.CT$min` to `r annual.catches.spring.CT$max` during spring (mean = `r annual.catches.spring.CT$mean` $\pm$ `r round(annual.catches.spring.CT$SD,1)`) compared to only `r annual.catches.fall.CT$min` to `r annual.catches.fall.CT$max` fish during fall (mean = `r annual.catches.fall.CT$mean` $\pm$ `r round(annual.catches.fall.CT$SD,1)`). 
-
+Far fewer fish are captured during fall fence operations. Total annual CCT catches range from `r annual.catches.fall.CT$min` to `r annual.catches.fall.CT$max` (mean = `r annual.catches.fall.CT$mean` $\pm$ `r round(annual.catches.fall.CT$SD,1)`), while returning adult CO have ranged in number from  `r annual.catches.fall.CO$min`to `r annual.catches.fall.CO$max`(mean =`r annual.catches.fall.CO$mean` $\pm$ `r round(annual.catches.fall.CO$SD,1)`). However, CO returns prior to 2022 were considerably lower, ranging from `r annual.catches.fall.CO.old$min` fish in 2008 to `r annual.catches.fall.CO.old$max` fish in 2014 (mean = `r annual.catches.fall.CO$mean` $\pm$ `r round(annual.catches.fall.CO$SD,1)`). 
 
 #### Annual Captures Figures and Tables
 
@@ -269,7 +275,7 @@ print(catch_annual_barPlot.Spring)
 ## Kable - Master Summary ----
 options(knitr.kable.NA = '-')
 
-catch_annual.Table.Spring %>% group_by(Year) %>% mutate(total.catch = nCT + nCO)
+# catch_annual.Table.Spring %>% group_by(Year) %>% mutate(total.catch = nCT + nCO)
 
 kable(catch_annual.Table.Spring  %>% group_by(Year) %>% mutate(total.catch = nCT + nCO),
       "html",
@@ -327,6 +333,8 @@ kable(catch_annual.Table.Fall,
                      "Capture Timing" = 3,"Fork Length (mm)" = 5)) %>%
   add_header_above(c(" " = 4, "CCT" = 8, "Coho Salmon" = 8)) 
 ```
+
+
 ### 2.4 Length Frequency {.tabset .tabset-dropdown}
 ```{r 6. Length Frequency - Load Data, echo=FALSE, warning=FALSE, message = FALSE, include = FALSE}
  source("SourceFiles/6. Length Frequency.R")

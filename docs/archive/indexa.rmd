@@ -1,0 +1,47 @@
+---
+---
+title: "SimmsFishFence"
+author: "Eric V"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    fig_caption: yes
+    code_folding: show
+    toc: yes
+    toc_float: yes
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: scroll
+  html_notebook:
+    toc: yes
+  word_document:
+    toc: yes
+editor_options:
+  chunk_output_type: inline
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r run source files}
+source("SourceFiles/0. RunSourceFiles.R")
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+print(trap_effort_plot_spring)
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
