@@ -531,6 +531,9 @@ print(daily_catch_plot.Fall.CO)
 print(daily_catch_plot.Fall.CT)
 ```
 
+```{r}
+knitr::knit_exit()
+```
 
 
 
